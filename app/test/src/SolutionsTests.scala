@@ -34,7 +34,7 @@ object SolutionsTests extends TestSuite:
           ("forward", 2)
         )
       )
-      assert(position == (15, 10))
-      assert((position._1 * position._2) == 150)
+      assert(position._2 == (15, 60))
+      assert((position._2._1 * position._2._2) == 900)
     }
   }

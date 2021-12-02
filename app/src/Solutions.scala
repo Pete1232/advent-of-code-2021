@@ -8,9 +8,14 @@ object Solutions:
       .sum
 
   def dive(instructions: List[(String, Int)]) =
-    instructions.foldRight((0, 0)) {
-      (instruction: (String, Int), nextPosition: (Int, Int)) =>
-        nextDive(instruction._1, instruction._2, nextPosition)
+    instructions.foldLeft((0, (0, 0))) {
+      (nextPosition: (Int, (Int, Int)), instruction: (String, Int)) =>
+        nextDive(
+          instruction._1,
+          instruction._2,
+          nextPosition._1,
+          nextPosition._2
+        )
     }
 
   // doesn't handle unknown verbs nicely
@@ -18,12 +23,19 @@ object Solutions:
   private def nextDive(
       verb: String,
       magnitude: Int,
+      currentAim: Int,
       currentPosition: (Int, Int)
-  ): (Int, Int) =
+  ): (Int, (Int, Int)) = // aim, (forward, depth)
     verb match
       case "forward" =>
-        (currentPosition._1 + magnitude, currentPosition._2)
+        (
+          currentAim,
+          (
+            currentPosition._1 + magnitude,
+            currentPosition._2 + (magnitude * currentAim)
+          )
+        )
       case "up" =>
-        (currentPosition._1, currentPosition._2 - magnitude)
+        (currentAim - magnitude, (currentPosition._1, currentPosition._2))
       case "down" =>
-        (currentPosition._1, currentPosition._2 + magnitude)
+        (currentAim + magnitude, (currentPosition._1, currentPosition._2))
