@@ -114,6 +114,9 @@ object Solutions:
 
     binaryToDecimal(position(input, 0))
 
+  def lifeSupportReport(input: List[List[Int]]) =
+    carbonDioxideReport(input) * oxygenReport(input)
+
   def binaryToDecimal(binary: List[Int]): Int =
     binary.reverse.zipWithIndex
       .map {

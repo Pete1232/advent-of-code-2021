@@ -83,4 +83,11 @@ object SolutionsTests extends TestSuite:
       )
       assert(report == 10)
     }
+
+    test("life support report") - {
+      val report = Solutions.lifeSupportReport(
+        diagnosticReport
+      )
+      assert(report == 230)
+    }
   }
