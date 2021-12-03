@@ -1,17 +1,9 @@
 import Solutions._
 import utest._
+import utils.BinaryNumber
 
 object DiagnosticReportTests extends TestSuite:
   val tests = Tests {
-    test("binary to decimal") - {
-      assert(BinaryNumber(List(1, 0, 1, 1, 0)).toDecimal == 22)
-      assert(BinaryNumber(List(0, 1, 0, 0, 1)).toDecimal == 9)
-      assert(
-        BinaryNumber(
-          List(1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0)
-        ).toDecimal == 2322
-      )
-    }
 
     val diagnosticReport = DiagnosticReport(
       List(
@@ -36,12 +28,12 @@ object DiagnosticReportTests extends TestSuite:
     }
 
     test("oxygen generator report") - {
-      val report = diagnosticReport.oxygenGenerationRating.toDecimal
+      val report = diagnosticReport.oxygenGenerationRating.asDecimal
       assert(report == 23)
     }
 
     test("co2 scrubber report") - {
-      val report = diagnosticReport.carbonDioxideScrubberRating.toDecimal
+      val report = diagnosticReport.carbonDioxideScrubberRating.asDecimal
       assert(report == 10)
     }
 
