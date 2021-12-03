@@ -2,6 +2,8 @@ import Solutions._
 import utest._
 import utils.BinaryNumber
 
+import math.Numeric.Implicits.infixNumericOps
+
 object DiagnosticReportTests extends TestSuite:
   val tests = Tests {
 
@@ -28,12 +30,12 @@ object DiagnosticReportTests extends TestSuite:
     }
 
     test("oxygen generator report") - {
-      val report = diagnosticReport.oxygenGenerationRating.asDecimal
+      val report = diagnosticReport.oxygenGenerationRating.toInt
       assert(report == 23)
     }
 
     test("co2 scrubber report") - {
-      val report = diagnosticReport.carbonDioxideScrubberRating.asDecimal
+      val report = diagnosticReport.carbonDioxideScrubberRating.toInt
       assert(report == 10)
     }
 

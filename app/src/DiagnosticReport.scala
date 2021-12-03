@@ -1,6 +1,8 @@
 import DiagnosticReport._
 import utils.BinaryNumber
 
+import math.Numeric.Implicits.infixNumericOps
+
 case class DiagnosticReport(report: List[BinaryNumber]):
 
   lazy val size: Int = report.size
@@ -18,7 +20,7 @@ case class DiagnosticReport(report: List[BinaryNumber]):
   )
 
   lazy val diagnosticPower: Int =
-    gammaRate.asDecimal * epsilonRate.asDecimal
+    (gammaRate * epsilonRate).toInt
 
   lazy val oxygenGenerationRating: BinaryNumber =
     rating(this, 0)(_.gammaRate)
@@ -27,7 +29,7 @@ case class DiagnosticReport(report: List[BinaryNumber]):
     rating(this, 0)(_.epsilonRate)
 
   lazy val lifeSupportRating: Int =
-    oxygenGenerationRating.asDecimal * carbonDioxideScrubberRating.asDecimal
+    (oxygenGenerationRating * carbonDioxideScrubberRating).toInt
 
 object DiagnosticReport:
 
