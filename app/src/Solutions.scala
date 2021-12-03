@@ -1,3 +1,5 @@
+import java.util.function.IntBinaryOperator
+import scala.collection.BitSet
 object Solutions:
 
   def sonarScan(in: List[Int], windowSize: Int): Int =
@@ -39,3 +41,35 @@ object Solutions:
         (currentAim - magnitude, (currentPosition._1, currentPosition._2))
       case "down" =>
         (currentAim + magnitude, (currentPosition._1, currentPosition._2))
+
+  // report used to generate a gamma rate and epsilon rate, all binary
+  // power consumption = gamma * epsilon
+  // the bit in position X of gamma is the most common bit in position X for the whole report
+  // epsilon rate is the lest common
+  // power = gamma * epsilon
+  def diagnosticReport(in: List[List[Int]]): Int =
+    val reportSize = in.size
+    val totalCount = in.fold(Nil) { (l, r) =>
+      // using zip assumes equal length, zipAll may work for differing lengths?
+      l.zipAll(r, 0, 0).map(_ + _)
+    }
+
+    val gamma = totalCount.map { columnCount =>
+      if (columnCount > reportSize / 2)
+        1
+      else
+        0
+    }
+
+    val epsilon = gamma.map(bit => Math.abs(bit - 1))
+
+    binaryToDecimal(gamma) * binaryToDecimal(epsilon)
+
+  def binaryToDecimal(binary: List[Int]): Int =
+    binary.reverse.zipWithIndex
+      .map {
+        case (bit, index) if bit == 1 => Math.pow(2, index)
+        case _                        => 0
+      }
+      .sum
+      .toInt

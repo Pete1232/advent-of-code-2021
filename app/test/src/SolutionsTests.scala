@@ -37,4 +37,34 @@ object SolutionsTests extends TestSuite:
       assert(position._2 == (15, 60))
       assert((position._2._1 * position._2._2) == 900)
     }
+
+    test("binary to decimal") - {
+      assert(Solutions.binaryToDecimal(List(1, 0, 1, 1, 0)) == 22)
+      assert(Solutions.binaryToDecimal(List(0, 1, 0, 0, 1)) == 9)
+      assert(
+        Solutions.binaryToDecimal(
+          List(1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0)
+        ) == 2322
+      )
+    }
+
+    test("diagnostic report") - {
+      val report = Solutions.diagnosticReport(
+        List(
+          List(0, 0, 1, 0, 0),
+          List(1, 1, 1, 1, 0),
+          List(1, 0, 1, 1, 0),
+          List(1, 0, 1, 1, 1),
+          List(1, 0, 1, 0, 1),
+          List(0, 1, 1, 1, 1),
+          List(0, 0, 1, 1, 1),
+          List(1, 1, 1, 0, 0),
+          List(1, 0, 0, 0, 0),
+          List(1, 1, 0, 0, 1),
+          List(0, 0, 0, 1, 0),
+          List(0, 1, 0, 1, 0)
+        )
+      )
+      assert(report == 198)
+    }
   }
