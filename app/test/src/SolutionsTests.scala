@@ -48,23 +48,39 @@ object SolutionsTests extends TestSuite:
       )
     }
 
-    test("diagnostic report") - {
-      val report = Solutions.diagnosticReport(
-        List(
-          List(0, 0, 1, 0, 0),
-          List(1, 1, 1, 1, 0),
-          List(1, 0, 1, 1, 0),
-          List(1, 0, 1, 1, 1),
-          List(1, 0, 1, 0, 1),
-          List(0, 1, 1, 1, 1),
-          List(0, 0, 1, 1, 1),
-          List(1, 1, 1, 0, 0),
-          List(1, 0, 0, 0, 0),
-          List(1, 1, 0, 0, 1),
-          List(0, 0, 0, 1, 0),
-          List(0, 1, 0, 1, 0)
-        )
+    val diagnosticReport = List(
+      List(0, 0, 1, 0, 0),
+      List(1, 1, 1, 1, 0),
+      List(1, 0, 1, 1, 0),
+      List(1, 0, 1, 1, 1),
+      List(1, 0, 1, 0, 1),
+      List(0, 1, 1, 1, 1),
+      List(0, 0, 1, 1, 1),
+      List(1, 1, 1, 0, 0),
+      List(1, 0, 0, 0, 0),
+      List(1, 1, 0, 0, 1),
+      List(0, 0, 0, 1, 0),
+      List(0, 1, 0, 1, 0)
+    )
+
+    test("diagnostic power report") - {
+      val report = Solutions.diagnosticPower(
+        diagnosticReport
       )
       assert(report == 198)
+    }
+
+    test("oxygen generator report") - {
+      val report = Solutions.oxygenReport(
+        diagnosticReport
+      )
+      assert(report == 23)
+    }
+
+    test("co2 scrubber report") - {
+      val report = Solutions.carbonDioxideReport(
+        diagnosticReport
+      )
+      assert(report == 10)
     }
   }
