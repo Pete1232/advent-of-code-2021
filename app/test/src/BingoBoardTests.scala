@@ -72,5 +72,14 @@ object BingoBoardTests extends TestSuite:
         assert(result.map(_._1.name) == Some(board3.name))
         assert(result.map(_._2) == Some(4512))
       }
+      test("full sequence") - {
+        val calls = callSequence
+        val result = BingoBoard.playRound(
+          callSequence = calls,
+          gameBoards = List(board1, board2, board3)
+        )
+        assert(result.map(_._1.name) == Some(board3.name))
+        assert(result.map(_._2) == Some(4512))
+      }
     }
   }
