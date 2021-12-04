@@ -79,7 +79,12 @@ object BingoBoard:
       )
     else
       val parsed =
-        thisRow.head.split(" ").filterNot(_ == " ").filterNot(_.isEmpty).toList.map(_.toInt)
+        thisRow.head
+          .split(" ")
+          .filterNot(_ == " ")
+          .filterNot(_.isEmpty)
+          .toList
+          .map(_.toInt)
       parseCardsFromText(
         input = input.tail,
         output = output,
