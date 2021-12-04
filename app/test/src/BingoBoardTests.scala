@@ -81,5 +81,43 @@ object BingoBoardTests extends TestSuite:
         assert(result.map(_._1.name) == Some(board3.name))
         assert(result.map(_._2) == Some(4512))
       }
+      test("parse from texr") - {
+        val input = List(
+          " 6 71 87 35 74",
+          "40 16 19 73 69",
+          " 1 67 42 78 23",
+          "49 59 65 45 53",
+          "48 82 30 72 39",
+          "",
+          "39 31 13  2 38",
+          "60 65 18  7  1",
+          "74 23 78 51  4",
+          "50 61 83 94 25",
+          "34  3 80  6 87",
+          "",
+          "87 15 42 55 64",
+          "93 30 83 80 46",
+          "24 81 26 31  8",
+          "84 14 67 82 23",
+          "75 22 94 74 40",
+          "",
+          "40 21 75  2 78",
+          "25 15 49 61 55",
+          "98 70 92 93 63",
+          "53  1  0 33 32",
+          "12 59 18 44 73",
+          "",
+          "78 11 12 58 61",
+          "26  8 51 28 69",
+          "64 35 89 95  1",
+          "20 79 62 13 83",
+          "53  7 84 18 34",
+          ""
+        )
+        val cards = BingoBoard.parseCardsFromText(input)
+        assert(cards.head.board.head.map(_._1) == List(6, 71, 87, 35, 74))
+        assert(cards.apply(4).board.head.map(_._1) == List(78, 11, 12, 58, 61))
+        assert(cards.apply(4).board.last.map(_._1) == List(53, 7, 84, 18, 34))
+      }
     }
   }

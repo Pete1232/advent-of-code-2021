@@ -59,3 +59,29 @@ object BingoBoard:
   def finalScore(lastCall: Int, finalBoard: BingoBoard): Int =
     val boardScore = finalBoard.board.flatMap(_.filterNot(_._2)).map(_._1).sum
     boardScore * lastCall
+
+  @scala.annotation.tailrec
+  def parseCardsFromText(
+      input: List[String],
+      output: List[BingoBoard] = Nil,
+      currentCardBeingBuilt: List[List[Int]] = Nil
+  ): List[BingoBoard] =
+    val thisRow = input.headOption
+    if (thisRow.isEmpty) output
+    else if (thisRow.head.isEmpty)
+      parseCardsFromText(
+        input = input.tail,
+        output = output :+ BingoBoard(
+          (output.size + 1).toString,
+          currentCardBeingBuilt: _*
+        ),
+        currentCardBeingBuilt = Nil
+      )
+    else
+      val parsed =
+        thisRow.head.split(" ").filterNot(_ == " ").filterNot(_.isEmpty).toList.map(_.toInt)
+      parseCardsFromText(
+        input = input.tail,
+        output = output,
+        currentCardBeingBuilt = currentCardBeingBuilt :+ parsed
+      )
