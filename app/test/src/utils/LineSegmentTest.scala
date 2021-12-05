@@ -76,6 +76,7 @@ object LineSegmentTests extends TestSuite:
         LineSegment((0, 0), (8, 8)),
         LineSegment((5, 5), (8, 2))
       )
+      LineSegment.renderPointsFrequency(result)
       assert(
         result.values.count(_ >= 2) == 5
       )

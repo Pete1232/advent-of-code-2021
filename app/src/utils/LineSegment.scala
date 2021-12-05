@@ -33,9 +33,8 @@ object LineSegment:
   def getPointsFrequency(
       lineSegments: LineSegment*
   ): Map[(Int, Int), Int] =
-    val result = lineSegments
+    lineSegments
       .filter { line =>
-        println(line.toString + line.gradient)
         List(None, Some(0)).contains(line.gradient)
       } // only horizontal and vertical lines for part 1
       .flatMap(line => line.points)
@@ -43,10 +42,8 @@ object LineSegment:
         val currentCount = map.get(point).getOrElse(0)
         map + (point -> (currentCount + 1))
       )
-    renderPointsFrequency(result)
-    result
 
-  private def renderPointsFrequency(frequency: Map[(Int, Int), Int]): Unit =
+  def renderPointsFrequency(frequency: Map[(Int, Int), Int]): Unit =
     val maxX = frequency.keySet.maxBy((x, y) => x)._1
     val maxY = frequency.keySet.maxBy((x, y) => y)._2
     val grid =
