@@ -23,7 +23,7 @@ case class LineSegment(point1: (Int, Int), point2: (Int, Int)):
       if (x == end._1)
         points
       else
-        nextPoint(points = points :+ (x + 1, y + (gradient.get * x)))
+        nextPoint(points = points :+ (x + 1, y + gradient.get))
     else if (y == end._2)
       points
     else
@@ -31,12 +31,16 @@ case class LineSegment(point1: (Int, Int), point2: (Int, Int)):
 
 object LineSegment:
   def getPointsFrequency(
+      onlyHorizontalAndVertical: Boolean,
       lineSegments: LineSegment*
   ): Map[(Int, Int), Int] =
     lineSegments
       .filter { line =>
-        List(None, Some(0)).contains(line.gradient)
-      } // only horizontal and vertical lines for part 1
+        if (onlyHorizontalAndVertical)
+          List(None, Some(0)).contains(line.gradient)
+        else
+          true
+      }
       .flatMap(line => line.points)
       .foldLeft(Map.empty[(Int, Int), Int])((map, point) =>
         val currentCount = map.get(point).getOrElse(0)
