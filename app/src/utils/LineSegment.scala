@@ -31,3 +31,31 @@ case class LineSegment(point1: (Int, Int), point2: (Int, Int)):
       points
     else
       nextPoint(points = points :+ (x, y + gradient))
+
+object LineSegment:
+  def getPointsFrequency(
+      lineSegments: LineSegment*
+  ): Map[(Int, Int), Int] =
+    val result = lineSegments
+      .filterNot(
+        List(-1, 0, 1).contains(_)
+      ) // only horizontal and vertical lines for part 1
+      .flatMap(line => line.points)
+      .foldLeft(Map.empty[(Int, Int), Int])((map, point) =>
+        val currentCount = map.get(point).getOrElse(0)
+        map + (point -> (currentCount + 1))
+      )
+    renderPointsFrequency(result)
+    result
+
+  private def renderPointsFrequency(frequency: Map[(Int, Int), Int]): Unit =
+    val maxX = frequency.keySet.maxBy((x, y) => x)._1
+    val maxY = frequency.keySet.maxBy((x, y) => y)._2
+    val grid =
+      List.tabulate(maxX + 1, maxY + 1)( (x, y) =>
+        frequency.get((x,y)).map(_.toString).getOrElse('.')
+      ).transpose
+    grid.foreach( row =>
+      row.foreach(count => print(count.toString + " "))
+      println("")
+    )
