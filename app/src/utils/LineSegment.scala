@@ -8,38 +8,36 @@ case class LineSegment(point1: (Int, Int), point2: (Int, Int)):
       (point2, point1)
   val height = end._2 - start._2
   val width = end._1 - start._1
-  val gradient =
+  val gradient: Option[Int] =
     if (width == 0)
-      if (height >= 0)
-        1
-      else
-        -1
+      None
     else
-      height / width
+      Some(height / width)
   val points = nextPoint(points = List(start))
 
   @scala.annotation.tailrec
   final def nextPoint(points: List[(Int, Int)]): List[(Int, Int)] =
     val x = points.last._1
     val y = points.last._2
-    if (Math.abs(gradient) != 1) // not a vertical line
+    if (gradient.isDefined) // not a vertical line
       if (x == end._1)
         points
       else
-        nextPoint(points = points :+ (x + 1, y + (gradient * x)))
+        nextPoint(points = points :+ (x + 1, y + (gradient.get * x)))
     else if (y == end._2)
       points
     else
-      nextPoint(points = points :+ (x, y + gradient))
+      nextPoint(points = points :+ (x, y + height / Math.abs(height)))
 
 object LineSegment:
   def getPointsFrequency(
       lineSegments: LineSegment*
   ): Map[(Int, Int), Int] =
     val result = lineSegments
-      .filter(line =>
-        List(-1, 0, 1).contains(line.gradient)
-      ) // only horizontal and vertical lines for part 1
+      .filter { line =>
+        println(line.toString + line.gradient)
+        List(None, Some(0)).contains(line.gradient)
+      } // only horizontal and vertical lines for part 1
       .flatMap(line => line.points)
       .foldLeft(Map.empty[(Int, Int), Int])((map, point) =>
         val currentCount = map.get(point).getOrElse(0)
