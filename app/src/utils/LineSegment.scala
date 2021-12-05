@@ -37,8 +37,8 @@ object LineSegment:
       lineSegments: LineSegment*
   ): Map[(Int, Int), Int] =
     val result = lineSegments
-      .filterNot(
-        List(-1, 0, 1).contains(_)
+      .filter( line =>
+        List(-1, 0, 1).contains(line.gradient)
       ) // only horizontal and vertical lines for part 1
       .flatMap(line => line.points)
       .foldLeft(Map.empty[(Int, Int), Int])((map, point) =>
