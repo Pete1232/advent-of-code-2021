@@ -37,7 +37,7 @@ object LineSegment:
       lineSegments: LineSegment*
   ): Map[(Int, Int), Int] =
     val result = lineSegments
-      .filter( line =>
+      .filter(line =>
         List(-1, 0, 1).contains(line.gradient)
       ) // only horizontal and vertical lines for part 1
       .flatMap(line => line.points)
@@ -52,10 +52,12 @@ object LineSegment:
     val maxX = frequency.keySet.maxBy((x, y) => x)._1
     val maxY = frequency.keySet.maxBy((x, y) => y)._2
     val grid =
-      List.tabulate(maxX + 1, maxY + 1)( (x, y) =>
-        frequency.get((x,y)).map(_.toString).getOrElse('.')
-      ).transpose
-    grid.foreach( row =>
+      List
+        .tabulate(maxX + 1, maxY + 1)((x, y) =>
+          frequency.get((x, y)).map(_.toString).getOrElse('.')
+        )
+        .transpose
+    grid.foreach(row =>
       row.foreach(count => print(count.toString + " "))
       println("")
     )

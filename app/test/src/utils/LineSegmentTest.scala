@@ -65,16 +65,16 @@ object LineSegmentTests extends TestSuite:
     }
     test("calculate points frequency") - {
       val result = LineSegment.getPointsFrequency(
-        LineSegment((0,9), (5,9)),
-        LineSegment((8,0), (0,8)),
-        LineSegment((9,4), (3,4)),
-        LineSegment((2,2), (2,1)),
-        LineSegment((7,0), (7,4)),
-        LineSegment((6,4), (2,0)),
-        LineSegment((0,9), (2,9)),
-        LineSegment((3,4), (1,4)),
-        LineSegment((0,0), (8,8)),
-        LineSegment((5,5), (8,2))
+        LineSegment((0, 9), (5, 9)),
+        LineSegment((8, 0), (0, 8)),
+        LineSegment((9, 4), (3, 4)),
+        LineSegment((2, 2), (2, 1)),
+        LineSegment((7, 0), (7, 4)),
+        LineSegment((6, 4), (2, 0)),
+        LineSegment((0, 9), (2, 9)),
+        LineSegment((3, 4), (1, 4)),
+        LineSegment((0, 0), (8, 8)),
+        LineSegment((5, 5), (8, 2))
       )
       assert(
         result.values.count(_ >= 2) == 5
