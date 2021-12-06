@@ -11,7 +11,7 @@ object Lanternfish:
 
   // any fish on 0 at the start of the day will be added to the new 6 count
   // AND for every fish on 0 at the start of the day one will be added to the 8 count
-  def nextDay(distribution: Map[Int, Int]): Map[Int, Int] =
+  def nextDay(distribution: Map[Int, Long]): Map[Int, Long] =
     Map(
       0 -> distribution.get(1),
       1 -> distribution.get(2),
@@ -24,14 +24,14 @@ object Lanternfish:
         .flatMap(sevens => distribution.get(0).map(zeros => sevens + zeros)),
       7 -> distribution.get(8),
       8 -> distribution.get(0)
-    ).mapValues(_.getOrElse(0)).toMap
+    ).mapValues(_.getOrElse(0L)).toMap
 
-  def nextDays(days: Int, initialDistribution: Map[Int, Int]) =
+  def nextDays(days: Int, initialDistribution: Map[Int, Long]) =
     List
       .fill(days)(0)
       .foldLeft(initialDistribution) { (distribution, _) =>
         Lanternfish.nextDay(distribution)
       }
-  
-  def countFish(fish: List[Int]): Map[Int, Int] =
-    fish.groupBy(identity).mapValues(_.size).toMap
+
+  def countFish(fish: List[Int]): Map[Int, Long] =
+    fish.groupBy(identity).mapValues(_.size.toLong).toMap
