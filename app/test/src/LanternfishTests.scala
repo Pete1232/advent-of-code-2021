@@ -81,6 +81,6 @@ object LanternfishTests extends TestSuite:
           )
           .values
           .sum
-      println(count)
+      assert(count == 1702631502303L)
     }
   }
