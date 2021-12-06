@@ -32,3 +32,6 @@ object Lanternfish:
       .foldLeft(initialDistribution) { (distribution, _) =>
         Lanternfish.nextDay(distribution)
       }
+  
+  def countFish(fish: List[Int]): Map[Int, Int] =
+    fish.groupBy(identity).mapValues(_.size).toMap
