@@ -1,5 +1,7 @@
 object PointsOnALine:
-  def closestPoint(positions: List[Int])(distanceFunction: (Int, Int) => Int): (Int, Int) =
+  def closestPoint(
+      positions: List[Int]
+  )(distanceFunction: (Int, Int) => Int): (Int, Int) =
     List
       .tabulate(positions.max) { point =>
         (point, distanceTo(point, positions)(distanceFunction))
