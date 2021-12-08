@@ -3,7 +3,7 @@ object SevenSegmentDisplay:
       strings: List[String]
   ): List[(SevenSegmentDisplay, List[String])] =
     strings.map(s =>
-      val splitString =  s.split('|')
+      val splitString = s.split('|')
       val patternsString = splitString(0)
       val outputString = splitString(1)
       val display = SevenSegmentDisplay(patternsString.split(" ").toList)
