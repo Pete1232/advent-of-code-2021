@@ -1,27 +1,25 @@
-// object SevenSegmentSearch:
-//   val properWiring: Map[Int, List[String]] = Map(
-//     1 -> List("c", "f"),
-//     7 -> List("a", "c", "f"),
-//     4 -> List("b", "c", "d", "f"),
-//     2 -> List("a", "c", "d", "e", "g"),
-//     3 -> List("a", "c", "d", "f", "g"),
-//     5 -> List("a", "b", "d", "f", "g"),
-//     0 -> List("a", "b", "c", "e", "f", "g"),
-//     6 -> List("a", "b", "d", "e", "f", "g"),
-//     9 -> List("a", "b", "c", "d", "f", "g"),
-//     8 -> List("a", "b", "c", "d", "e", "f", "g")
-//   )
+object SevenSegmentDisplay:
+  def fromStrings(
+      strings: List[String]
+  ): List[(SevenSegmentDisplay, List[String])] =
+    strings.map(s =>
+      val splitString =  s.split('|')
+      val patternsString = splitString(0)
+      val outputString = splitString(1)
+      val display = SevenSegmentDisplay(patternsString.split(" ").toList)
+      (display, outputString.split(" ").toList.filterNot(_ == ""))
+    )
 
 case class SevenSegmentDisplay(patterns: List[String]):
   // first count unique display sizes
-  val display1: String = patterns.find(_.size == 2).get
-  val display7: String = patterns.find(_.size == 3).get
-  val display4: String = patterns.find(_.size == 4).get
-  val display8: String = patterns.find(_.size == 7).get
+  lazy val display1: String = patterns.find(_.size == 2).get
+  lazy val display7: String = patterns.find(_.size == 3).get
+  lazy val display4: String = patterns.find(_.size == 4).get
+  lazy val display8: String = patterns.find(_.size == 7).get
 
-  val aSegment: Char = display7.diff(display1).charAt(0)
+  lazy val aSegment: Char = display7.diff(display1).charAt(0)
 
-  val allCharacters: String = patterns.fold("")(_ + _)
+  lazy val allCharacters: String = patterns.fold("")(_ + _)
 
   // e appears 4 times
   // b appears 6 times
@@ -31,34 +29,34 @@ case class SevenSegmentDisplay(patterns: List[String]):
   // c appears 8 times
   // f appears 9 times
 
-  val countOfEachCharacter: Map[Char, Int] =
+  lazy val countOfEachCharacter: Map[Char, Int] =
     allCharacters.groupMapReduce(identity)(_ => 1)(_ + _)
 
   def findWithCount(count: Int): Char =
     countOfEachCharacter.find((k, v) => v == count).get._1
 
-  val bSegment: Char = findWithCount(6)
-  val eSegment: Char = findWithCount(4)
-  val fSegment: Char = findWithCount(9)
+  lazy val bSegment: Char = findWithCount(6)
+  lazy val eSegment: Char = findWithCount(4)
+  lazy val fSegment: Char = findWithCount(9)
 
   // can easily get the c segment now
-  val cSegment: Char = display1.toList.filterNot(_ == fSegment).head
+  lazy val cSegment: Char = display1.toList.filterNot(_ == fSegment).head
 
   // now know which characters correspond to a, b, c, e, f - so can find g
-  val allOfABCEF: List[Char] =
+  lazy val allOfABCEF: List[Char] =
     List(aSegment, bSegment, cSegment, eSegment, fSegment)
-  val displaysWith6Segments: List[String] = patterns.filter(_.size == 6)
-  val display0: String =
+  lazy val displaysWith6Segments: List[String] = patterns.filter(_.size == 6)
+  lazy val display0: String =
     displaysWith6Segments.find(_.toList.diff(allOfABCEF).size == 1).get
-  val gSegment: Char = display0.diff(allOfABCEF).head
+  lazy val gSegment: Char = display0.diff(allOfABCEF).head
 
   // now have a, b, c, e, f, g - can find d
-  val allOfABCEFG: List[Char] = allOfABCEF :+ gSegment
-  val dSegment: Char = display8.filterNot(allOfABCEFG.contains).head
+  lazy val allOfABCEFG: List[Char] = allOfABCEF :+ gSegment
+  lazy val dSegment: Char = display8.filterNot(allOfABCEFG.contains).head
 
   // now displays. We need to be able to go from a list of characters to a number (the displayed digit)
 
-  val wiring = Map(
+  lazy val wiring = Map(
     List(aSegment, bSegment, cSegment, eSegment, fSegment, gSegment) -> 0,
     List(cSegment, fSegment) -> 1,
     List(aSegment, cSegment, dSegment, eSegment, gSegment) -> 2,
@@ -80,9 +78,10 @@ case class SevenSegmentDisplay(patterns: List[String]):
   )
 
   def toDigit(input: Char*): Int =
-    wiring.find((characters, digit) =>
-      characters.sorted.equals(input.sorted)
-    ).get._2
+    wiring
+      .find((characters, digit) => characters.sorted.equals(input.sorted))
+      .get
+      ._2
 
   def toString(on: Char*) =
     val off = '.'
@@ -102,6 +101,3 @@ case class SevenSegmentDisplay(patterns: List[String]):
     $e    $f
      $g$g$g$g
     """
-
-  override def toString() =
-    toString("abcdefg".toCharArray: _*)
