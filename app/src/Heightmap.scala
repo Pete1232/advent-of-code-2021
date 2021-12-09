@@ -25,7 +25,12 @@ case class Heightmap(underlying: Map[(Int, Int), Int]):
 
   lazy val risk = lowestPoints.map(_._2 + 1).sum
 
-  def searchAround(point: (Int, Int), basin: Set[(Int, Int)]): Set[(Int, Int)] =
+  @scala.annotation.tailrec
+  final def searchAround(
+      point: (Int, Int),
+      basin: Set[(Int, Int)],
+      notChecked: Set[(Int, Int)]
+  ): Set[(Int, Int)] =
     val up = (point._1, point._2 - 1)
     val down = (point._1, point._2 + 1)
     val left = (point._1 - 1, point._2)
@@ -45,13 +50,15 @@ case class Heightmap(underlying: Map[(Int, Int), Int]):
         else
           Some(p)
       )
-      .flatten
+      .flatten ++ notChecked
 
     if (pointsToAddToBasin.isEmpty) basin
     else
-      pointsToAddToBasin
-        .flatMap(p => searchAround(p, basin ++ pointsToAddToBasin))
-        .toSet
+      searchAround(
+        pointsToAddToBasin.head,
+        basin + pointsToAddToBasin.head,
+        pointsToAddToBasin.tail.toSet
+      )
 
 object Heightmap:
 
