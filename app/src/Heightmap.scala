@@ -8,9 +8,6 @@ case class Heightmap(underlying: Map[(Int, Int), Int]):
     val left = (point._1 - 1, point._2)
     val right = (point._1 + 1, point._2)
 
-    if (point == (9, 0))
-      println(up.toString + down + left + right)
-
     val lowestPointAround = List(
       underlying.get(up),
       underlying.get(down),
@@ -23,8 +20,10 @@ case class Heightmap(underlying: Map[(Int, Int), Int]):
         Some(point -> p)
       case _ => None
 
-  def lowestPoints: Set[((Int, Int), Int)] =
-    underlying.keySet.map(isLowestPoint).flatten
+  lazy val lowestPoints: List[((Int, Int), Int)] =
+    underlying.keySet.toList.map(isLowestPoint).flatten
+
+  lazy val risk = lowestPoints.map(_._2 + 1).sum
 
 object Heightmap:
 
