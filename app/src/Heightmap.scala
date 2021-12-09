@@ -25,6 +25,34 @@ case class Heightmap(underlying: Map[(Int, Int), Int]):
 
   lazy val risk = lowestPoints.map(_._2 + 1).sum
 
+  def searchAround(point: (Int, Int), basin: Set[(Int, Int)]): Set[(Int, Int)] =
+    val up = (point._1, point._2 - 1)
+    val down = (point._1, point._2 + 1)
+    val left = (point._1 - 1, point._2)
+    val right = (point._1 + 1, point._2)
+
+    val basinPoints = List(
+      underlying.find(_._1 == up),
+      underlying.find(_._1 == down),
+      underlying.find(_._1 == left),
+      underlying.find(_._1 == right)
+    ).flatten.filterNot(_._2 == 9).map(_._1)
+
+    val pointsToAddToBasin = basinPoints
+      .map(p =>
+        if (basin.contains(p))
+          None
+        else
+          Some(p)
+      )
+      .flatten
+
+    if (pointsToAddToBasin.isEmpty) basin
+    else
+      pointsToAddToBasin
+        .flatMap(p => searchAround(p, basin ++ pointsToAddToBasin))
+        .toSet
+
 object Heightmap:
 
   def buildHeightmap(s: String): Heightmap =

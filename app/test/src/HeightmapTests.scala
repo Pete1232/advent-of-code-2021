@@ -43,6 +43,13 @@ object HeightmapTests extends TestSuite:
       assert(result == List(0, 1, 5, 5))
       assert(risk == 15)
     }
+    test("calculate basin sizes") - {
+      val basins = map.lowestPoints
+        .map(_._1)
+        .map(a => map.searchAround(a, Set.empty))
+      val result = basins.map(_.size).sorted
+      assert(result == List(3, 9, 9, 14))
+    }
 
     test("answer") - {
       val inputString =
@@ -150,6 +157,15 @@ object HeightmapTests extends TestSuite:
       """.stripMargin.trim
       val map = Heightmap.buildHeightmap(inputString)
       val result = map.lowestPoints.map(_._2)
+
+      // val basins = map.lowestPoints
+      //   .map(_._1)
+      //   .map(a => map.searchAround(a, Set.empty).size)
+      // println(basins)
+
+      val basin1 = map.searchAround(map.lowestPoints.head._1, Set.empty)
+      println(basin1)
+
       assert(map.risk == 550)
     }
   }
