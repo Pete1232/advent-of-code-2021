@@ -3,7 +3,7 @@ import SyntaxChecker.LineType
 
 object SyntaxCheckerTests extends TestSuite:
   val tests = Tests {
-    test("count a corrupt row") - {
+    test("score a corrupt row") - {
       val row1 = SyntaxChecker.lintLine("{([(<{}[<>[]}>{[]{[(<()>")
       val row2 = SyntaxChecker.lintLine("[[<[([]))<([[{}[[()]]]")
       val row3 = SyntaxChecker.lintLine("[{[{({}]{}}([{[{{{}}([]")
@@ -23,36 +23,43 @@ object SyntaxCheckerTests extends TestSuite:
       assert(row2 == Right(0 -> LineType.Valid))
       assert(row3 == Right(0 -> LineType.Valid))
     }
-    test("return 0 for an incomplete row") - {
+    test("score an incomplete row") - {
       val row1 = SyntaxChecker.lintLine("[({(<(())[]>[[{[]{<()<>>")
       val row2 = SyntaxChecker.lintLine("[(()[<>])]({[<{<<[]>>(")
+      val row3 = SyntaxChecker.lintLine("(((({<>}<{<{<>}{[]{[]{}")
+      val row4 = SyntaxChecker.lintLine("{<[[]]>}<{[{[{[]{()[[[]")
+      val row5 = SyntaxChecker.lintLine("<{([{{}}[<[[[<>{}]]]>[]]")
 
-      assert(row1 == Right(0 -> LineType.Incomplete))
-      assert(row2 == Right(0 -> LineType.Incomplete))
+      assert(row1 == Right(288957 -> LineType.Incomplete))
+      assert(row2 == Right(5566 -> LineType.Incomplete))
+      assert(row3 == Right(1480781 -> LineType.Incomplete))
+      assert(row4 == Right(995444 -> LineType.Incomplete))
+      assert(row5 == Right(294 -> LineType.Incomplete))
     }
     test("calculate total syntax error") - {
-      val result = SyntaxChecker.lintAll(
-        """
-        |[({(<(())[]>[[{[]{<()<>>
-        |[(()[<>])]({[<{<<[]>>(
-        |{([(<{}[<>[]}>{[]{[(<()>
-        |(((({<>}<{<{<>}{[]{[]{}
-        |[[<[([]))<([[{}[[()]]]
-        |[{[{({}]{}}([{[{{{}}([]
-        |{<[[]]>}<{[{[{[]{()[[[]
-        |[<(<(<(<{}))><([]([]()
-        |<{([([[(<>()){}]>(<<{{
-        |<{([{{}}[<[[[<>{}]]]>[]]
-        """.stripMargin.trim,
-        LineType.Corrupt
-      )
+      val input = """
+          |[({(<(())[]>[[{[]{<()<>>
+          |[(()[<>])]({[<{<<[]>>(
+          |{([(<{}[<>[]}>{[]{[(<()>
+          |(((({<>}<{<{<>}{[]{[]{}
+          |[[<[([]))<([[{}[[()]]]
+          |[{[{({}]{}}([{[{{{}}([]
+          |{<[[]]>}<{[{[{[]{()[[[]
+          |[<(<(<(<{}))><([]([]()
+          |<{([([[(<>()){}]>(<<{{
+          |<{([{{}}[<[[[<>{}]]]>[]]
+        """.stripMargin.trim
 
-      assert(result == Right(26397))
+      val corruptedScore = SyntaxChecker.lintAll(input)
+
+      val completedScore = SyntaxChecker.completeAll(input)
+
+      assert(corruptedScore == Right(26397))
+      assert(completedScore == Right(288957))
     }
 
     test("answer") - {
-      val result = SyntaxChecker.lintAll(
-        """
+      val input = """
         |<({<[(({(((({(<><>)[[][]]}<<()>{{}}>)(<{(){}}((){})>))<[((<><>){()()})[(<>{}){[]{}}]]>){{(({[]()}<[][]>
         |{<({[[<<{(<{(<{}()>([][])){<<>}[<>()]}}[<(<>()){()()}>[[(){}]({}())]]>{({{<>{}}[<><>]}<{()<>}{{}()
         |{{<<<[<({[{{<({}())(<>{})>(<()<>><()[]>)}<([<>{}](<>[]))<{{}<>]>>}<[[<<><>><[]()>][[[]{}]{{}}]][{(<>(
@@ -147,10 +154,12 @@ object SyntaxCheckerTests extends TestSuite:
         |<[<<<[{<[<[[{(()<>)[()<>]}]({{()<>}({}())}[[{}()]])][{([<>{}]){({}[])([]{})}}]>[[[<(<>{})<(){}>>]}]]
         |<<[[[{[<[(<<<{<><>}(()[])>{{()()}[()[]]}>>)[<{[<[]()>({}{})]{{{}[]}[[]]}}{{{[]<>}{()()}}}>[[[[(){}]({}<>)]{
         |<[<((<<<{<[({[[][]]<{}{}>})({{<>{}}[()<>]}(({}{})[[]()]))]({{(<><>)<<>()>}{[[]{}]}}({(()())[{}()
-        """.stripMargin.trim,
-        LineType.Corrupt
-      )
+        """.stripMargin.trim
 
-      assert(result == Right(166191))
+      val corruptedScore = SyntaxChecker.lintAll(input)
+      val completedScore = SyntaxChecker.completeAll(input)
+
+      assert(corruptedScore == Right(166191))
+      assert(completedScore == Right(1152088313))
     }
   }

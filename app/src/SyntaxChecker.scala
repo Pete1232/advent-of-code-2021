@@ -1,5 +1,6 @@
 import scala.collection.immutable.Queue
 import cats.data.EitherT
+import cats.Eval
 
 object SyntaxChecker:
 
@@ -13,18 +14,36 @@ object SyntaxChecker:
   enum LineType:
     case Corrupt, Incomplete, Valid
 
-  def lintAll(s: String, errorType: LineType): Either[String, Int] =
+  def lintAll(s: String): Either[String, Long] =
     EitherT(
       s.split("\n")
         .toList
         .map(lintLine)
-        .filter(_.map(_._2 == errorType).getOrElse(false))
+        .filter(_.map(_._2 == LineType.Corrupt).getOrElse(false))
     )
-      .foldLeft[Either[String, Int]](Right(0))((total, lineResult) =>
+      .foldLeft[Either[String, Long]](Right(0))((total, lineResult) =>
         total.map(_ + lineResult._1)
       )
 
-  def lintLine(s: String): Either[String, (Int, LineType)] =
+  def completeAll(s: String): Either[String, Long] =
+    EitherT(
+      s.split("\n")
+        .toList
+        .map(lintLine)
+        .filter(_.map(_._2 == LineType.Incomplete).getOrElse(false))
+    )
+      .foldLeft[Either[String, (List[Long], Int)]](Right(List.empty -> 0))(
+        (total, lineResult) =>
+          total.map(t => (lineResult._1 +: t._1) -> (t._2 + 1))
+      )
+      .flatMap(scores =>
+        scores._1.sorted
+          .drop(scores._2 / 2)
+          .headOption
+          .toRight(s"Error trying to find the midpoint of ${scores._1} ")
+      )
+
+  def lintLine(s: String): Either[String, (Long, LineType)] =
     lintLine(s, List.empty)
 
   /** Lint a line to see if the churn syntax is correct
@@ -38,14 +57,14 @@ object SyntaxChecker:
   private def lintLine(
       s: String,
       currentlyOpen: List[Char]
-  ): Either[String, (Int, LineType)] =
+  ): Either[String, (Long, LineType)] =
     s.headOption match
       case None | Some('\n') =>
         // end of the line
         if (currentlyOpen.isEmpty)
           Right(0, LineType.Valid)
         else
-          Right(0, LineType.Incomplete)
+          scoreCompletion(stillOpen = currentlyOpen)
       case Some(c) =>
         // somewhere in the line
         // note if the currentlyOpen list is empty at this point we're looking at a new chunk
@@ -58,7 +77,7 @@ object SyntaxChecker:
           currentlyOpen.headOption match
             case None =>
               // error case, since we can't close what isn't open
-              score(c)
+              scoreCorrupt(c)
             case Some(open) =>
               // for this to be valid it has to match the most recently opened chunk
               bracketPairs.get(open) match
@@ -69,10 +88,31 @@ object SyntaxChecker:
                   lintLine(s.tail, currentlyOpen.tail)
                 case _ =>
                   // otherwise score up
-                  score(c)
+                  scoreCorrupt(c)
 
-  private def score(c: Char): Either[String, (Int, LineType)] =
-    Map(')' -> 3, ']' -> 57, '}' -> 1197, '>' -> 25137)
+  private def scoreCorrupt(c: Char): Either[String, (Long, LineType)] =
+    Map(')' -> 3L, ']' -> 57L, '}' -> 1197L, '>' -> 25137L)
       .get(c)
       .toRight(s"$c is not a valid close")
       .map(_ -> LineType.Corrupt)
+
+  private def scoreCompletion(
+      stillOpen: List[Char]
+  ): Either[String, (Long, LineType)] =
+
+    val closures = EitherT(
+      stillOpen
+        .map(c => bracketPairs.get(c).toRight(s"$c is not a valid open"))
+    )
+
+    val scores: EitherT[List, String, Long] = closures.subflatMap { c =>
+      Map(')' -> 1L, ']' -> 2L, '}' -> 3L, '>' -> 4L)
+        .get(c)
+        .toRight(s"$c is not a valid close")
+    }
+
+    scores
+      .foldLeft[Either[String, Long]](Right(0))((total, score) =>
+        total.map(_ * 5 + score)
+      )
+      .map(_ -> LineType.Incomplete)
