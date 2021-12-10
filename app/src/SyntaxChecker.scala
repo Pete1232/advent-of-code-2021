@@ -1,5 +1,6 @@
 import scala.collection.immutable.Queue
 import cats.data.EitherT
+
 object SyntaxChecker:
 
   final private val bracketPairs = Map(
@@ -9,13 +10,22 @@ object SyntaxChecker:
     '<' -> '>'
   )
 
-  def lintAll(s: String): Either[String, Int] =
-    EitherT(s.split("\n").toList.map(lintLine))
+  enum LineType:
+    case Corrupt, Incomplete, Valid
+
+  def lintAll(s: String, errorType: LineType): Either[String, Int] =
+    EitherT(
+      s.split("\n")
+        .toList
+        .map(lintLine)
+        .filter(_.map(_._2 == errorType).getOrElse(false))
+    )
       .foldLeft[Either[String, Int]](Right(0))((total, lineResult) =>
-        total.map(_ + lineResult)
+        total.map(_ + lineResult._1)
       )
 
-  def lintLine(s: String): Either[String, Int] = lintLine(s, List.empty)
+  def lintLine(s: String): Either[String, (Int, LineType)] =
+    lintLine(s, List.empty)
 
   /** Lint a line to see if the churn syntax is correct
     * @return
@@ -28,11 +38,14 @@ object SyntaxChecker:
   private def lintLine(
       s: String,
       currentlyOpen: List[Char]
-  ): Either[String, Int] =
+  ): Either[String, (Int, LineType)] =
     s.headOption match
       case None | Some('\n') =>
         // end of the line
-        Right(0)
+        if (currentlyOpen.isEmpty)
+          Right(0, LineType.Valid)
+        else
+          Right(0, LineType.Incomplete)
       case Some(c) =>
         // somewhere in the line
         // note if the currentlyOpen list is empty at this point we're looking at a new chunk
@@ -58,10 +71,8 @@ object SyntaxChecker:
                   // otherwise score up
                   score(c)
 
-  private def score(c: Char): Either[String, Int] =
-    c match
-      case ')' => Right(3)
-      case ']' => Right(57)
-      case '}' => Right(1197)
-      case '>' => Right(25137)
-      case _   => Left(s"$c is not a valid close")
+  private def score(c: Char): Either[String, (Int, LineType)] =
+    Map(')' -> 3, ']' -> 57, '}' -> 1197, '>' -> 25137)
+      .get(c)
+      .toRight(s"$c is not a valid close")
+      .map(_ -> LineType.Corrupt)

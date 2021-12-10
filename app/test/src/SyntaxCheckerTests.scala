@@ -1,4 +1,5 @@
 import utest._
+import SyntaxChecker.LineType
 
 object SyntaxCheckerTests extends TestSuite:
   val tests = Tests {
@@ -8,26 +9,26 @@ object SyntaxCheckerTests extends TestSuite:
       val row3 = SyntaxChecker.lintLine("[{[{({}]{}}([{[{{{}}([]")
       val row4 = SyntaxChecker.lintLine("<{([([[(<>()){}]>(<<{{")
 
-      assert(row1 == Right(1197))
-      assert(row2 == Right(3))
-      assert(row3 == Right(57))
-      assert(row4 == Right(25137))
+      assert(row1 == Right(1197 -> LineType.Corrupt))
+      assert(row2 == Right(3 -> LineType.Corrupt))
+      assert(row3 == Right(57 -> LineType.Corrupt))
+      assert(row4 == Right(25137 -> LineType.Corrupt))
     }
     test("return 0 for a valid row") - {
       val row1 = SyntaxChecker.lintLine("([])")
       val row2 = SyntaxChecker.lintLine("[<>({}){}[([])<>]]")
       val row3 = SyntaxChecker.lintLine("(((((((((())))))))))")
 
-      assert(row1 == Right(0))
-      assert(row2 == Right(0))
-      assert(row3 == Right(0))
+      assert(row1 == Right(0 -> LineType.Valid))
+      assert(row2 == Right(0 -> LineType.Valid))
+      assert(row3 == Right(0 -> LineType.Valid))
     }
     test("return 0 for an incomplete row") - {
       val row1 = SyntaxChecker.lintLine("[({(<(())[]>[[{[]{<()<>>")
       val row2 = SyntaxChecker.lintLine("[(()[<>])]({[<{<<[]>>(")
 
-      assert(row1 == Right(0))
-      assert(row2 == Right(0))
+      assert(row1 == Right(0 -> LineType.Incomplete))
+      assert(row2 == Right(0 -> LineType.Incomplete))
     }
     test("calculate total syntax error") - {
       val result = SyntaxChecker.lintAll(
@@ -42,7 +43,8 @@ object SyntaxCheckerTests extends TestSuite:
         |[<(<(<(<{}))><([]([]()
         |<{([([[(<>()){}]>(<<{{
         |<{([{{}}[<[[[<>{}]]]>[]]
-        """.stripMargin.trim
+        """.stripMargin.trim,
+        LineType.Corrupt
       )
 
       assert(result == Right(26397))
@@ -145,7 +147,8 @@ object SyntaxCheckerTests extends TestSuite:
         |<[<<<[{<[<[[{(()<>)[()<>]}]({{()<>}({}())}[[{}()]])][{([<>{}]){({}[])([]{})}}]>[[[<(<>{})<(){}>>]}]]
         |<<[[[{[<[(<<<{<><>}(()[])>{{()()}[()[]]}>>)[<{[<[]()>({}{})]{{{}[]}[[]]}}{{{[]<>}{()()}}}>[[[[(){}]({}<>)]{
         |<[<((<<<{<[({[[][]]<{}{}>})({{<>{}}[()<>]}(({}{})[[]()]))]({{(<><>)<<>()>}{[[]{}]}}({(()())[{}()
-        """.stripMargin.trim
+        """.stripMargin.trim,
+        LineType.Corrupt
       )
 
       assert(result == Right(166191))
