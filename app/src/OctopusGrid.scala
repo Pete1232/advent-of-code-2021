@@ -15,6 +15,19 @@ case class OctopusGrid(
 
   lazy val totalFlashes: Int = flashesUntilNow + flashes
 
+  lazy val allFlashed: Boolean = underlying.keySet.size == flashes
+
+  def stepUntilAllFlashed(
+      maxSteps: Int,
+      steps: Int = 0
+  ): Option[(OctopusGrid, Int)] =
+    if (steps == maxSteps || allFlashed)
+      Some(this -> steps)
+    else if (steps == maxSteps)
+      None
+    else
+      nextStep.stepUntilAllFlashed(maxSteps, steps + 1)
+
   def step(count: Int): OctopusGrid =
     if (count == 0)
       this

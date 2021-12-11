@@ -49,6 +49,11 @@ object OctopusGridTests extends TestSuite:
       val result100 = resultGrid100.totalFlashes
       assert(result100 == 1656)
     }
+    test("first simultaneous flash in larger example") - {
+      val (resultGrid, resultCount) = testGrid.stepUntilAllFlashed(200).get
+      println(resultGrid.show)
+      assert(resultCount == 195)
+    }
 
     test("answer") - {
       val input = OctopusGrid.buildGrid(
@@ -66,7 +71,10 @@ object OctopusGridTests extends TestSuite:
         """.stripMargin.trim
       )
 
-      val result = input.step(100).totalFlashes
-      assert(result == 1661)
+      val resultPart1 = input.step(100).totalFlashes
+      assert(resultPart1 == 1661)
+
+      val resultPart2 = input.stepUntilAllFlashed(1000).get._2
+      assert(resultPart2 == 334)
     }
   }
