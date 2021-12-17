@@ -9,8 +9,48 @@ case class OperatorPacket(
     version: Int,
     typeId: Int,
     lengthTypeId: Int,
-    subPackets: List[Packet]
-) extends Packet
+    length: Int,
+    content: String
+) extends Packet:
+
+  // TODO lengthTypeId should be an enum
+  lazy val subPackets =
+    if (lengthTypeId == 0)
+      buildSubPackets(content.take(length))
+    else
+      buildSubPackets(content).take(length)
+
+  def buildSubPackets(binary: String): List[Packet] =
+    // TODO the duplication here doesn't feel right
+    val packetVersion = BinaryNumber(binary.take(3)).toInt
+    val packetTypeId = BinaryNumber(binary.drop(3).take(3)).toInt
+    buildPackets(packetVersion, packetTypeId, binary.drop(6))
+
+  private def buildPackets(
+      packetVersion: Int,
+      packetTypeId: Int,
+      remainingContent: String,
+      packetString: String = ""
+  ): List[Packet] =
+    val chunk = remainingContent.take(5)
+    if (chunk.length < 5)
+      // nothing left to parse
+      List.empty
+    else if (chunk.head == '0')
+      // end of the packet, but maybe not the whole message
+      Packet(
+        packetVersion,
+        packetTypeId,
+        packetString + chunk
+      ) +: buildSubPackets(remainingContent.drop(5))
+    else
+      // the chunk is valid so continue to build up the packet
+      buildPackets(
+        packetVersion,
+        packetTypeId,
+        remainingContent.drop(5),
+        packetString + chunk
+      )
 
 case class LiteralPacket(version: Int, typeId: Int, content: String)
     extends Packet:
@@ -31,51 +71,36 @@ case class LiteralPacket(version: Int, typeId: Int, content: String)
 
 object Packet:
 
-  def fromHexString(hex: String): List[Packet] =
+  def fromHexString(hex: String): Packet =
     fromBinaryString(hex.map(hexToBinary).mkString)
 
-  def fromBinaryString(binary: String): List[Packet] =
+  def fromBinaryString(binary: String): Packet =
     val version = BinaryNumber(binary.take(3)).toInt
     val typeId = BinaryNumber(binary.drop(3).take(3)).toInt
-    buildPackets(version, typeId, binary.drop(6))
+    apply(version, typeId, binary.drop(6))
 
   def apply(version: Int, typeId: Int, content: String): Packet =
     if (typeId == 4) LiteralPacket(version, typeId, content)
     else
-      val lengthTypeId = content.head.toInt
+      val lengthTypeId = content.head.getNumericValue
       if (lengthTypeId == 0)
-        // todo implement length limit
         val length = BinaryNumber(content.tail.take(15)).toInt
         OperatorPacket(
           version,
           typeId,
           lengthTypeId,
-          fromBinaryString(content.drop(16))
+          length,
+          content.drop(16)
         )
       else
-        // todo implement sub-packet count
+        val length = BinaryNumber(content.tail.take(11)).toInt
         OperatorPacket(
           version,
           typeId,
           lengthTypeId,
-          fromBinaryString(content.drop(16))
+          length,
+          content.drop(12)
         )
-
-  private def buildPackets(
-      version: Int,
-      typeId: Int,
-      content: String,
-      packetString: String = ""
-  ): List[Packet] =
-    val chunk = content.take(5)
-    if (chunk.length < 5)
-      List(Packet(version, typeId, packetString + chunk))
-    else if (chunk.head == 0)
-      Packet(version, typeId, packetString + chunk) +: fromBinaryString(
-        content.drop(5)
-      )
-    else
-      buildPackets(version, typeId, content.drop(5), packetString + chunk)
 
   private val hexToBinary = Map(
     '0' -> "0000",
