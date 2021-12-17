@@ -9,6 +9,10 @@ import scala.util.Try
 case class BinaryNumber(asList: List[Int])
 
 object BinaryNumber:
+
+  def apply(s: String): BinaryNumber =
+    BinaryNumber(s.toList.map(_.getNumericValue))
+
   implicit final val binaryIsNumeric: Numeric[BinaryNumber] =
     new Numeric[BinaryNumber]:
       def compare(x: BinaryNumber, y: BinaryNumber): Int =
