@@ -47,4 +47,9 @@ object TrickShotTests extends TestSuite:
       val result = target.bestShot
       assert(result == Some(45))
     }
+
+    test("answer 1") - {
+      val puzzleTarget = Target(192, 251, -89, -59)
+      assert(puzzleTarget.bestShot == Some(3916))
+    }
   }
