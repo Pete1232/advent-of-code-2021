@@ -48,8 +48,18 @@ object TrickShotTests extends TestSuite:
       assert(result == Some(45))
     }
 
+    test("find all valid velocities") - {
+      val result = target.goodShots.size
+      assert(result == 112)
+    }
+
+    val puzzleTarget = Target(192, 251, -89, -59)
+
     test("answer 1") - {
-      val puzzleTarget = Target(192, 251, -89, -59)
       assert(puzzleTarget.bestShot == Some(3916))
+    }
+
+    test("answer 2") - {
+      assert(puzzleTarget.goodShots.size == 2986)
     }
   }

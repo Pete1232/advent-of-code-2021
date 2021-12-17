@@ -13,6 +13,10 @@ case class Target(xMin: Int, xMax: Int, yMin: Int, yMax: Int):
   val xRange = Range.inclusive(xMin, xMax)
   val yRange = Range.inclusive(yMin, yMax)
 
+  // where to restrict the velocity search to
+  val xSearchRange = Range.inclusive(0, xMax)
+  val ySearchRange = Range.inclusive(yMin, Math.abs(yMin))
+
   // take a trick shot at the target
   // returns the point it hits the target area... if it does
   @scala.annotation.tailrec
@@ -52,9 +56,7 @@ case class Target(xMin: Int, xMax: Int, yMin: Int, yMax: Int):
 
   // returns the height of the shot that goes the highest
   lazy val bestShot: Option[Int] =
-    val maxHeights = Range
-      .inclusive(yMin, Math.abs(yMin))
-      .map(y => y -> List.tabulate(y)(_ + 1).sum)
+    val maxHeights = ySearchRange.map(y => y -> List.tabulate(y)(_ + 1).sum)
 
     maxHeights
       .sortBy(_._2)
@@ -66,3 +68,9 @@ case class Target(xMin: Int, xMax: Int, yMin: Int, yMax: Int):
             (velocityAndHeight._1, velocityAndHeight._2)
           findXVelocity(yVelocity = yVelocity).map(_ => maxHeight)
       )
+
+  // all velocities that will hit the target
+  lazy val goodShots: Seq[(Int, Int)] =
+    ySearchRange.flatMap(yVelocity =>
+      xSearchRange.flatMap(xVelocity => trickShot(0 -> 0, xVelocity, yVelocity))
+    )
