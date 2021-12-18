@@ -63,7 +63,20 @@ object HexDecoderTests extends TestSuite:
       val literalPacket2_2 =
         subPacket2.subPackets.last.asInstanceOf[LiteralPacket]
 
-      println(result.subPackets)
+      assert(result.version == 3)
+      assert(result.typeId == 0)
+      assert(result.lengthTypeId == 1)
+      assert(result.length == 2)
+
+      assert(subPacket1.version == 0)
+      assert(subPacket1.typeId == 0)
+      assert(subPacket1.lengthTypeId == 0)
+      assert(subPacket1.length == 22)
+
+      assert(subPacket2.version == 1)
+      assert(subPacket2.typeId == 0)
+      assert(subPacket2.lengthTypeId == 1)
+      assert(subPacket2.length == 2)
 
       assert(result.version == 3)
       val versionCount = result.totalVersion
@@ -87,8 +100,6 @@ object HexDecoderTests extends TestSuite:
       val literalPacket2_2 =
         subPacket2.subPackets.last.asInstanceOf[LiteralPacket]
 
-      println(result.subPackets)
-
       val versionCount = result.totalVersion
       assert(versionCount == 23)
     }
@@ -101,8 +112,6 @@ object HexDecoderTests extends TestSuite:
       val subPacket2 = subPacket1.subPackets.last.asInstanceOf[OperatorPacket]
       val literalPackets =
         subPacket2.subPackets.map(_.asInstanceOf[LiteralPacket])
-
-      println(result.subPackets)
 
       assert(literalPackets.size == 5)
       val versionCount = result.totalVersion

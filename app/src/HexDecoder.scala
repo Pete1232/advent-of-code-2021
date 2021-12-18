@@ -21,7 +21,7 @@ case class OperatorPacket(
     else
       3 + 3 + 1 + 11 + subPackets.map(_.binarySize).sum
 
-  final val totalVersion = version + subPackets.map(_.version).sum
+  final val totalVersion = version + subPackets.map(_.totalVersion).sum
 
 case class LiteralPacket(version: Int, typeId: Int, content: String)
     extends Packet:
@@ -32,12 +32,27 @@ case class LiteralPacket(version: Int, typeId: Int, content: String)
 
   lazy val decimalValue = BinaryNumber(
     content
+      .grouped(5)
+      .foldLeft[(String, Option[String])](("" -> None))((result, bits) =>
+        if (result._2.isDefined)
+          result._1 -> (result._2 match
+            case None            => Some(bits)
+            case Some(remainder) => Some(remainder + bits)
+          )
+        else
+          val newResult = result._1 + bits.tail
+          if (bits.head == '0')
+            newResult -> Some("")
+          else
+            newResult -> None
+      )
+      ._1
   )
 
 object Packet:
 
   def fromHexString(hex: String): Packet =
-    fromBinaryString(hex.map(hexToBinary).mkString)
+    fromBinaryString(hexStringToBinary(hex))
 
   def fromBinaryString(binary: String): Packet =
     // val version = BinaryNumber(binary.take(3)).toInt
@@ -72,7 +87,7 @@ object Packet:
               case Some(remainder) => Some(remainder + bits)
             )
           else
-            val newResult = result._1 + bits.tail
+            val newResult = result._1 + bits
             if (bits.head == '0')
               newResult -> Some("")
             else
@@ -106,6 +121,8 @@ object Packet:
           case ""        => None
           case remainder => Some(remainder)
         )
+
+  def hexStringToBinary(hex: String) = hex.map(hexToBinary).mkString
 
   private val hexToBinary = Map(
     '0' -> "0000",
