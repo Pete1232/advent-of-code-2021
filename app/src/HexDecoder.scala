@@ -62,7 +62,8 @@ object Packet:
   // (version:typeId:content)(version:typeId:content)(version:typeId:content)...
   def getListOfPackets(
       binary: String,
-      packetsSoFar: List[Packet] = Nil
+      packetsSoFar: List[Packet] = Nil,
+      maxLength: Option[Int] = None
   ): IO[List[Packet]] =
     val packetAndRemainder = getPacket(binary)
 
@@ -71,7 +72,9 @@ object Packet:
         if (
           remainder.isEmpty || remainder == Some("") || remainder
             .map(_.length)
-            .getOrElse(0) < 6
+            .getOrElse(0) < 6 || Some(packetsSoFar.length) == maxLength.map(
+            _ - 1
+          )
         )
           IO(packetsSoFar :+ packet)
         else
@@ -119,7 +122,7 @@ object Packet:
         }
       else
         val length = BinaryNumber(binary.drop(7).take(11)).toInt
-        getListOfPackets(binary.drop(18)).map { packets =>
+        getListOfPackets(binary.drop(18), maxLength = Some(3)).map { packets =>
           val resultPacket = OperatorPacket(
             version,
             typeId,
