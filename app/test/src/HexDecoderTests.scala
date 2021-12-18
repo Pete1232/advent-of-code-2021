@@ -99,7 +99,8 @@ object HexDecoderTests extends TestSuite:
         .asInstanceOf[OperatorPacket]
       val subPacket1 = result.subPackets.head.asInstanceOf[OperatorPacket]
       val subPacket2 = subPacket1.subPackets.last.asInstanceOf[OperatorPacket]
-      val literalPackets = subPacket2.subPackets.map(_.asInstanceOf[LiteralPacket])
+      val literalPackets =
+        subPacket2.subPackets.map(_.asInstanceOf[LiteralPacket])
 
       println(result.subPackets)
 
