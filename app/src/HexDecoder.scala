@@ -55,22 +55,23 @@ object Packet:
     fromBinaryString(hexStringToBinary(hex))
 
   def fromBinaryString(binary: String): Packet =
-    // val version = BinaryNumber(binary.take(3)).toInt
-    // val typeId = BinaryNumber(binary.drop(3).take(3)).toInt
-    // apply(version, typeId, binary.drop(6))._1
     getPacket(binary)._1
 
   // (version:typeId:content)(version:typeId:content)(version:typeId:content)...
-  def getListOfPackets(binary: String): List[Packet] =
+  @scala.annotation.tailrec
+  def getListOfPackets(
+      binary: String,
+      packetsSoFar: List[Packet] = Nil
+  ): List[Packet] =
     val packetAndRemainder = Try(getPacket(binary)).toOption
 
     packetAndRemainder match
-      case None => List.empty
+      case None => packetsSoFar
       case Some((packet, remainder)) =>
         if (remainder.isEmpty || remainder == Some(""))
-          List(packet)
+          packetsSoFar :+ packet
         else
-          packet +: getListOfPackets(remainder.get)
+          getListOfPackets(remainder.get, packetsSoFar :+ packet)
 
   // version:typeId:content
   def getPacket(binary: String): (Packet, Option[String]) =
