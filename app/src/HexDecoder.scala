@@ -10,15 +10,35 @@ case class OperatorPacket(
     typeId: Int,
     lengthTypeId: Int,
     length: Int,
-    content: String
-) extends Packet:
+    subPackets: List[Packet]
+) extends Packet
 
-  // TODO lengthTypeId should be an enum
-  lazy val subPackets =
-    if (lengthTypeId == 0)
-      buildSubPackets(content.take(length))
-    else
-      buildSubPackets(content).take(length)
+case class LiteralPacket(version: Int, typeId: Int, content: String)
+    extends Packet:
+  lazy val decimalValue = BinaryNumber(
+    content
+      .grouped(5)
+      .foldLeft(("" -> false))((result, bits) =>
+        if (result._2) result
+        else
+          val newResult = result._1 + bits.tail
+          if (bits.head == '0')
+            newResult -> true
+          else
+            newResult -> false
+      )
+      ._1
+  )
+
+object Packet:
+
+  def fromHexString(hex: String): Packet =
+    fromBinaryString(hex.map(hexToBinary).mkString)
+
+  def fromBinaryString(binary: String): Packet =
+    val version = BinaryNumber(binary.take(3)).toInt
+    val typeId = BinaryNumber(binary.drop(3).take(3)).toInt
+    apply(version, typeId, binary.drop(6))
 
   def buildSubPackets(binary: String): List[Packet] =
     // TODO the duplication here doesn't feel right
@@ -52,33 +72,6 @@ case class OperatorPacket(
         packetString + chunk
       )
 
-case class LiteralPacket(version: Int, typeId: Int, content: String)
-    extends Packet:
-  lazy val decimalValue = BinaryNumber(
-    content
-      .grouped(5)
-      .foldLeft(("" -> false))((result, bits) =>
-        if (result._2) result
-        else
-          val newResult = result._1 + bits.tail
-          if (bits.head == '0')
-            newResult -> true
-          else
-            newResult -> false
-      )
-      ._1
-  )
-
-object Packet:
-
-  def fromHexString(hex: String): Packet =
-    fromBinaryString(hex.map(hexToBinary).mkString)
-
-  def fromBinaryString(binary: String): Packet =
-    val version = BinaryNumber(binary.take(3)).toInt
-    val typeId = BinaryNumber(binary.drop(3).take(3)).toInt
-    apply(version, typeId, binary.drop(6))
-
   def apply(version: Int, typeId: Int, content: String): Packet =
     if (typeId == 4) LiteralPacket(version, typeId, content)
     else
@@ -90,7 +83,7 @@ object Packet:
           typeId,
           lengthTypeId,
           length,
-          content.drop(16)
+          buildSubPackets(content.drop(16).take(length))
         )
       else
         val length = BinaryNumber(content.tail.take(11)).toInt
@@ -99,7 +92,7 @@ object Packet:
           typeId,
           lengthTypeId,
           length,
-          content.drop(12)
+          buildSubPackets(content.drop(12)).take(length)
         )
 
   private val hexToBinary = Map(
