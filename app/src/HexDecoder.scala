@@ -1,9 +1,12 @@
 import utils.BinaryNumber
 import math.Numeric.Implicits.infixNumericOps
+import scala.util.Try
 
 trait Packet:
   def version: Int
   def typeId: Int
+  def binarySize: Int
+  def totalVersion: Int
 
 case class OperatorPacket(
     version: Int,
@@ -11,23 +14,24 @@ case class OperatorPacket(
     lengthTypeId: Int,
     length: Int,
     subPackets: List[Packet]
-) extends Packet
+) extends Packet:
+  final val binarySize: Int =
+    if (lengthTypeId == 0)
+      3 + 3 + 1 + 15 + length
+    else
+      3 + 3 + 1 + 11 + subPackets.map(_.binarySize).sum
+
+  final val totalVersion = version + subPackets.map(_.version).sum
 
 case class LiteralPacket(version: Int, typeId: Int, content: String)
     extends Packet:
+
+  final val binarySize = 3 + 3 + content.length
+
+  final val totalVersion = version
+
   lazy val decimalValue = BinaryNumber(
     content
-      .grouped(5)
-      .foldLeft(("" -> false))((result, bits) =>
-        if (result._2) result
-        else
-          val newResult = result._1 + bits.tail
-          if (bits.head == '0')
-            newResult -> true
-          else
-            newResult -> false
-      )
-      ._1
   )
 
 object Packet:
@@ -36,63 +40,71 @@ object Packet:
     fromBinaryString(hex.map(hexToBinary).mkString)
 
   def fromBinaryString(binary: String): Packet =
+    // val version = BinaryNumber(binary.take(3)).toInt
+    // val typeId = BinaryNumber(binary.drop(3).take(3)).toInt
+    // apply(version, typeId, binary.drop(6))._1
+    getPacket(binary)._1
+
+  // (version:typeId:content)(version:typeId:content)(version:typeId:content)...
+  def getListOfPackets(binary: String): List[Packet] =
+    val packetAndRemainder = Try(getPacket(binary)).toOption
+
+    packetAndRemainder match
+      case None => List.empty
+      case Some((packet, remainder)) =>
+        if (remainder.isEmpty || remainder == Some(""))
+          List(packet)
+        else
+          packet +: getListOfPackets(remainder.get)
+
+  // version:typeId:content
+  def getPacket(binary: String): (Packet, Option[String]) =
     val version = BinaryNumber(binary.take(3)).toInt
     val typeId = BinaryNumber(binary.drop(3).take(3)).toInt
-    apply(version, typeId, binary.drop(6))
-
-  def buildSubPackets(binary: String): List[Packet] =
-    // TODO the duplication here doesn't feel right
-    val packetVersion = BinaryNumber(binary.take(3)).toInt
-    val packetTypeId = BinaryNumber(binary.drop(3).take(3)).toInt
-    buildPackets(packetVersion, packetTypeId, binary.drop(6))
-
-  private def buildPackets(
-      packetVersion: Int,
-      packetTypeId: Int,
-      remainingContent: String,
-      packetString: String = ""
-  ): List[Packet] =
-    val chunk = remainingContent.take(5)
-    if (chunk.length < 5)
-      // nothing left to parse
-      List.empty
-    else if (chunk.head == '0')
-      // end of the packet, but maybe not the whole message
-      Packet(
-        packetVersion,
-        packetTypeId,
-        packetString + chunk
-      ) +: buildSubPackets(remainingContent.drop(5))
+    if (typeId == 4)
+      val content = binary.drop(6)
+      val result = content
+        .grouped(5)
+        .foldLeft[(String, Option[String])](("" -> None))((result, bits) =>
+          if (result._2.isDefined)
+            result._1 -> (result._2 match
+              case None            => Some(bits)
+              case Some(remainder) => Some(remainder + bits)
+            )
+          else
+            val newResult = result._1 + bits.tail
+            if (bits.head == '0')
+              newResult -> Some("")
+            else
+              newResult -> None
+        )
+      LiteralPacket(version, typeId, result._1) -> result._2
     else
-      // the chunk is valid so continue to build up the packet
-      buildPackets(
-        packetVersion,
-        packetTypeId,
-        remainingContent.drop(5),
-        packetString + chunk
-      )
-
-  def apply(version: Int, typeId: Int, content: String): Packet =
-    if (typeId == 4) LiteralPacket(version, typeId, content)
-    else
-      val lengthTypeId = content.head.getNumericValue
+      val lengthTypeId = binary.drop(6).head.getNumericValue
       if (lengthTypeId == 0)
-        val length = BinaryNumber(content.tail.take(15)).toInt
+        val length = BinaryNumber(binary.drop(7).take(15)).toInt
         OperatorPacket(
           version,
           typeId,
           lengthTypeId,
           length,
-          buildSubPackets(content.drop(16).take(length))
+          getListOfPackets(binary.drop(22).take(length))
+        ) -> (binary.drop(22 + length) match
+          case ""        => None
+          case remainder => Some(remainder)
         )
       else
-        val length = BinaryNumber(content.tail.take(11)).toInt
-        OperatorPacket(
+        val length = BinaryNumber(binary.drop(7).take(11)).toInt
+        val resultPacket = OperatorPacket(
           version,
           typeId,
           lengthTypeId,
           length,
-          buildSubPackets(content.drop(12)).take(length)
+          getListOfPackets(binary.drop(18)).take(length)
+        )
+        resultPacket -> (binary.drop(resultPacket.binarySize) match
+          case ""        => None
+          case remainder => Some(remainder)
         )
 
   private val hexToBinary = Map(
