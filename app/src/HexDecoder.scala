@@ -16,20 +16,20 @@ case class OperatorPacket(
     length: Int,
     subPackets: List[Packet]
 ) extends Packet:
-  final val binarySize: Int =
+  final lazy val binarySize: Int =
     if (lengthTypeId == 0)
       3 + 3 + 1 + 15 + length
     else
       3 + 3 + 1 + 11 + subPackets.map(_.binarySize).sum
 
-  final val totalVersion = version + subPackets.map(_.totalVersion).sum
+  final lazy val totalVersion = version + subPackets.map(_.totalVersion).sum
 
 case class LiteralPacket(version: Int, typeId: Int, content: String)
     extends Packet:
 
-  final val binarySize = 3 + 3 + content.length
+  final lazy val binarySize = 3 + 3 + content.length
 
-  final val totalVersion = version
+  final lazy val totalVersion = version
 
   lazy val decimalValue = BinaryNumber(
     content
@@ -82,27 +82,31 @@ object Packet:
       }
       .handleError(_ => packetsSoFar)
 
+  @scala.annotation.tailrec
+  final def readLiteralUntilDone(
+      remainder: String,
+      result: String = ""
+  ): (String, Option[String]) =
+    val next = remainder.take(5)
+    if (remainder.isEmpty)
+      result -> None
+    if (remainder.head == '0')
+      (result + next) -> {
+        if (remainder.isEmpty) None else Some(remainder.drop(5))
+      }
+    else
+      readLiteralUntilDone(
+        remainder = remainder.drop(5),
+        result = result + next
+      )
+
   // version:typeId:content
   def getPacket(binary: String): IO[(Packet, Option[String])] =
     val version = BinaryNumber(binary.take(3)).toInt
     val typeId = BinaryNumber(binary.drop(3).take(3)).toInt
     if (typeId == 4)
       val content = binary.drop(6)
-      val result = content
-        .grouped(5)
-        .foldLeft[(String, Option[String])](("" -> None))((result, bits) =>
-          if (result._2.isDefined)
-            result._1 -> (result._2 match
-              case None            => Some(bits)
-              case Some(remainder) => Some(remainder + bits)
-            )
-          else
-            val newResult = result._1 + bits
-            if (bits.head == '0')
-              newResult -> Some("")
-            else
-              newResult -> None
-        )
+      val result = readLiteralUntilDone(remainder = content)
       IO(LiteralPacket(version, typeId, result._1) -> result._2)
     else
       val lengthTypeId = binary.drop(6).head.getNumericValue
@@ -130,7 +134,7 @@ object Packet:
             length,
             packets.take(length)
           )
-          resultPacket -> (binary.drop(resultPacket.binarySize) match
+          resultPacket -> (binary.drop(18 + resultPacket.binarySize) match
             case ""        => None
             case remainder => Some(remainder)
           )
