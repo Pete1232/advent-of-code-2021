@@ -6,6 +6,7 @@ import cats.effect.IO
 trait Packet:
   def version: Int
   def typeId: Int
+  def binaryString: String
   def binarySize: Int
   def totalVersion: Int
 
@@ -16,6 +17,18 @@ case class OperatorPacket(
     length: Int,
     subPackets: List[Packet]
 ) extends Packet:
+
+  final lazy val binaryString: String =
+    Numeric[BinaryNumber].fromInt(version).paddedString(3) +
+      Numeric[BinaryNumber].fromInt(typeId).paddedString(3) +
+      lengthTypeId.toString + {
+        if (lengthTypeId == 0)
+          Numeric[BinaryNumber].fromInt(length).paddedString(15)
+        else
+          Numeric[BinaryNumber].fromInt(length).paddedString(11)
+      } +
+      subPackets.map(_.binaryString).mkString
+
   final lazy val binarySize: Int =
     if (lengthTypeId == 0)
       3 + 3 + 1 + 15 + length
@@ -27,7 +40,13 @@ case class OperatorPacket(
 case class LiteralPacket(version: Int, typeId: Int, content: String)
     extends Packet:
 
-  final lazy val binarySize = 3 + 3 + content.length
+  final lazy val binaryString: String =
+    Numeric[BinaryNumber].fromInt(version).paddedString(3) +
+      Numeric[BinaryNumber].fromInt(typeId).paddedString(3) +
+      content
+
+  final lazy val binarySize: Int =
+    3 + 3 + content.length
 
   final lazy val totalVersion = version
 
@@ -90,7 +109,7 @@ object Packet:
     val next = remainder.take(5)
     if (remainder.isEmpty)
       result -> None
-    if (remainder.head == '0')
+    else if (remainder.head == '0')
       (result + next) -> {
         if (remainder.isEmpty) None else Some(remainder.drop(5))
       }

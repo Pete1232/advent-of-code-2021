@@ -117,4 +117,46 @@ object HexDecoderTests extends TestSuite:
       val versionCount = result.totalVersion
       assert(versionCount == 31)
     }
+
+    test("literal value and back again") - {
+      val testPacket = LiteralPacket(
+        version = 5,
+        typeId = 4,
+        content = "1" + Numeric[BinaryNumber]
+          .fromInt(5)
+          .paddedString(4) + "1" + Numeric[BinaryNumber]
+          .fromInt(15)
+          .paddedString(4) + Numeric[BinaryNumber]
+          .fromInt(5)
+          .paddedString(5)
+      )
+
+      assert(Packet.fromBinaryString(testPacket.binaryString) == testPacket)
+    }
+
+    test("operator value 1 and back again") - {
+
+      val testSubPacket: Packet = LiteralPacket(
+        version = 5,
+        typeId = 4,
+        content = "1" + Numeric[BinaryNumber]
+          .fromInt(5)
+          .paddedString(4) + "1" + Numeric[BinaryNumber]
+          .fromInt(15)
+          .paddedString(4) + Numeric[BinaryNumber]
+          .fromInt(5)
+          .paddedString(5)
+      )
+
+      val testPacket = OperatorPacket(
+        version = 5,
+        typeId = 2,
+        lengthTypeId = 0,
+        length = testSubPacket.binarySize,
+        subPackets = List(testSubPacket)
+      )
+
+      assert(testPacket.binarySize == testPacket.binaryString.length)
+      assert(Packet.fromBinaryString(testPacket.binaryString) == testPacket)
+    }
   }

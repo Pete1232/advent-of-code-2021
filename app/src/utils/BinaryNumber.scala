@@ -6,7 +6,16 @@ import scala.math.Numeric
 import scala.util.Success
 import scala.util.Try
 
-case class BinaryNumber(asList: List[Int])
+case class BinaryNumber(asList: List[Int]):
+  lazy val stringValue: String = paddedString(0)
+
+  def paddedString(padding: Int) =
+    val baseString = asList.mkString
+    val paddingRequired = padding - baseString.length
+    if (paddingRequired < 1)
+      baseString
+    else
+      List.fill(paddingRequired)(0).mkString + baseString
 
 object BinaryNumber:
 
