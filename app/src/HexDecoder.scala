@@ -9,6 +9,7 @@ trait Packet:
   def binaryString: String
   def binarySize: Int
   def totalVersion: Int
+  def decimalValue: Long
 
 case class OperatorPacket(
     version: Int,
@@ -37,6 +38,23 @@ case class OperatorPacket(
 
   final lazy val totalVersion = version + subPackets.map(_.totalVersion).sum
 
+  final lazy val decimalValue: Long = typeId match
+    case 0 => subPackets.map(_.decimalValue).sum
+    case 1 => subPackets.map(_.decimalValue).product
+    case 2 => subPackets.map(_.decimalValue).min
+    case 3 => subPackets.map(_.decimalValue).max
+    case 5 => // safe to assume 2 sub-packets according to requirements
+      if (subPackets.head.decimalValue > subPackets.apply(1).decimalValue) 1
+      else 0
+    case 6 => // safe to assume 2 sub-packets according to requirements
+      if (subPackets.head.decimalValue < subPackets.apply(1).decimalValue)
+        1
+      else
+        0
+    case 7 => // safe to assume 2 sub-packets according to requirements
+      if (subPackets.head.decimalValue == subPackets.apply(1).decimalValue) 1
+      else 0
+
 case class LiteralPacket(version: Int, typeId: Int, content: String)
     extends Packet:
 
@@ -50,7 +68,7 @@ case class LiteralPacket(version: Int, typeId: Int, content: String)
 
   final lazy val totalVersion = version
 
-  lazy val decimalValue = BinaryNumber(
+  lazy val decimalValue: Long = BinaryNumber(
     content
       .grouped(5)
       .foldLeft[(String, Option[String])](("" -> None))((result, bits) =>
@@ -67,10 +85,9 @@ case class LiteralPacket(version: Int, typeId: Int, content: String)
             newResult -> None
       )
       ._1
-  )
+  ).toInt
 
 object Packet:
-  import cats.effect.unsafe.implicits.global
 
   def fromHexString(hex: String): Packet =
     fromBinaryString(hexStringToBinary(hex))
