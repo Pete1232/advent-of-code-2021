@@ -47,10 +47,8 @@ case class OperatorPacket(
       if (subPackets.head.decimalValue > subPackets.apply(1).decimalValue) 1
       else 0
     case 6 => // safe to assume 2 sub-packets according to requirements
-      if (subPackets.head.decimalValue < subPackets.apply(1).decimalValue)
-        1
-      else
-        0
+      if (subPackets.head.decimalValue < subPackets.apply(1).decimalValue) 1
+      else 0
     case 7 => // safe to assume 2 sub-packets according to requirements
       if (subPackets.head.decimalValue == subPackets.apply(1).decimalValue) 1
       else 0
@@ -85,7 +83,7 @@ case class LiteralPacket(version: Int, typeId: Int, content: String)
             newResult -> None
       )
       ._1
-  ).toInt
+  ).toLong
 
 object Packet:
 

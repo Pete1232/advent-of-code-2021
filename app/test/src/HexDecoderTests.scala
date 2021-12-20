@@ -205,6 +205,6 @@ object HexDecoderTests extends TestSuite:
       )
 
       assert(result.totalVersion == 974)
-      println(result.decimalValue)
+      assert(result.decimalValue == 180616437720L)
     }
   }
