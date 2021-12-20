@@ -8,8 +8,9 @@ object ImageEnhancement:
     // step 1 is to extend the grid, since its "infinite" some non-existent pixels can be switched
     val largerGrid = grid.translate(1, 1)
     // get the enhanced value of each point
-    largerGrid.map { case (point, maybeValue) =>
-      point -> (algorithm.apply(pointValue(grid, point).toInt) match
+    // extend it again, just using the points to map out the new grid - the values of this one aren't used
+    largerGrid.translate(1, 1).map { case (point, _) =>
+      point -> (algorithm.apply(pointValue(largerGrid, point).toInt) match
         case '#' => Some(1)
         case '.' => None
       )
