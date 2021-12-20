@@ -70,21 +70,23 @@ case class LiteralPacket(version: Int, typeId: Int, content: String)
   )
 
 object Packet:
+  import cats.effect.unsafe.implicits.global
 
   def fromHexString(hex: String): Packet =
     fromBinaryString(hexStringToBinary(hex))
 
   def fromBinaryString(binary: String): Packet =
     import cats.effect.unsafe.implicits.global
-    getPacket(binary).unsafeRunSync()._1
+    getPacket(binary, top = true).unsafeRunSync()._1
 
   // (version:typeId:content)(version:typeId:content)(version:typeId:content)...
   def getListOfPackets(
       binary: String,
+      top: Boolean,
       packetsSoFar: List[Packet] = Nil,
       maxLength: Option[Int] = None
   ): IO[List[Packet]] =
-    val packetAndRemainder = getPacket(binary)
+    val packetAndRemainder = getPacket(binary, false)
 
     packetAndRemainder
       .flatMap { case (packet, remainder) =>
@@ -97,7 +99,12 @@ object Packet:
         )
           IO(packetsSoFar :+ packet)
         else
-          getListOfPackets(remainder.get, packetsSoFar :+ packet)
+          getListOfPackets(
+            remainder.get,
+            false,
+            packetsSoFar :+ packet,
+            maxLength
+          )
       }
       .handleError(_ => packetsSoFar)
 
@@ -120,7 +127,7 @@ object Packet:
       )
 
   // version:typeId:content
-  def getPacket(binary: String): IO[(Packet, Option[String])] =
+  def getPacket(binary: String, top: Boolean): IO[(Packet, Option[String])] =
     val version = BinaryNumber(binary.take(3)).toInt
     val typeId = BinaryNumber(binary.drop(3).take(3)).toInt
     if (typeId == 4)
@@ -131,7 +138,7 @@ object Packet:
       val lengthTypeId = binary.drop(6).head.getNumericValue
       if (lengthTypeId == 0)
         val length = BinaryNumber(binary.drop(7).take(15)).toInt
-        getListOfPackets(binary.drop(22).take(length)).map { packets =>
+        getListOfPackets(binary.drop(22).take(length), top).map { packets =>
           OperatorPacket(
             version,
             typeId,
@@ -145,18 +152,19 @@ object Packet:
         }
       else
         val length = BinaryNumber(binary.drop(7).take(11)).toInt
-        getListOfPackets(binary.drop(18), maxLength = Some(3)).map { packets =>
-          val resultPacket = OperatorPacket(
-            version,
-            typeId,
-            lengthTypeId,
-            length,
-            packets.take(length)
-          )
-          resultPacket -> (binary.drop(18 + resultPacket.binarySize) match
-            case ""        => None
-            case remainder => Some(remainder)
-          )
+        getListOfPackets(binary.drop(18), top, maxLength = Some(length)).map {
+          packets =>
+            val resultPacket = OperatorPacket(
+              version,
+              typeId,
+              lengthTypeId,
+              length,
+              packets.take(length)
+            )
+            resultPacket -> (binary.drop(resultPacket.binarySize) match
+              case ""        => None
+              case remainder => Some(remainder)
+            )
         }
 
   def hexStringToBinary(hex: String) = hex.map(hexToBinary).mkString
