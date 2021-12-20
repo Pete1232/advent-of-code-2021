@@ -67,6 +67,21 @@ object GridTests extends TestSuite:
       assert(noCol == None)
     }
 
+    "map" - {
+      val result = testGrid.map { case (point, maybeValue) =>
+        point -> Some(point._1 / 10)
+      }
+      assert(result.underlying.values.sum == 15)
+    }
+
+    "mapValues" - {
+      val result1 = testGrid.mapValues(identity)
+      assert(result1 == testGrid)
+
+      val result2 = testGrid.mapValues(_ => Some(1))
+      assert(result2.underlying.values.sum == 165)
+    }
+
     "transpose a point through a horizontal line" - {
       val result1 = Grid.transposePoint((0, 14), x = None, y = Some(7))
       assert(result1 == (0, 0))

@@ -1,11 +1,33 @@
 package utils
 
 import cats.Show
+import cats.syntax.validated
 
 case class Grid(underlying: Map[(Int, Int), Int]):
 
   final val columns = underlying.maxBy(_._1._1)._1._1 + 1
   final val rows = underlying.maxBy(_._1._2)._1._2 + 1
+
+  def get(point: (Int, Int)): Option[Int] =
+    underlying.get(point)
+
+  def map(f: ((Int, Int), Option[Int]) => ((Int, Int), Option[Int])): Grid =
+    Grid(
+      List
+        .tabulate(columns, rows) { case point =>
+          f(point, underlying.get(point))
+        }
+        .flatten
+        .filterNot(_._2 == None)
+        .toMap
+        .mapValues(_.get)
+        .toMap
+    )
+
+  def mapValues(f: Option[Int] => Option[Int]): Grid =
+    this.map { case (point, maybeValue) =>
+      point -> f(maybeValue)
+    }
 
   def row(index: Int): Option[Map[(Int, Int), Int]] =
     val result = underlying.filterKeys(_._2 == index)
