@@ -29,6 +29,44 @@ object GridTests extends TestSuite:
       )
     )
 
+    "count rows and columns" - {
+      val rows = testGrid.rows
+      val cols = testGrid.columns
+      assert(rows == 15)
+      assert(cols == 11)
+    }
+
+    "return a row" - {
+      val row = testGrid.row(4)
+      assert(
+        row == Some(
+          Map(
+            (3, 4) -> 1,
+            (8, 4) -> 1,
+            (10, 4) -> 1
+          )
+        )
+      )
+
+      val noRow = testGrid.row(50)
+      assert(noRow == None)
+    }
+
+    "return a column" - {
+      val col = testGrid.column(3)
+      assert(
+        col == Some(
+          Map(
+            (3, 0) -> 1,
+            (3, 4) -> 1
+          )
+        )
+      )
+
+      val noCol = testGrid.row(50)
+      assert(noCol == None)
+    }
+
     "transpose a point through a horizontal line" - {
       val result1 = Grid.transposePoint((0, 14), x = None, y = Some(7))
       assert(result1 == (0, 0))

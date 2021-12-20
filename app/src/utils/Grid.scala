@@ -4,6 +4,26 @@ import cats.Show
 
 case class Grid(underlying: Map[(Int, Int), Int]):
 
+  final val columns = underlying.maxBy(_._1._1)._1._1 + 1
+  final val rows = underlying.maxBy(_._1._2)._1._2 + 1
+
+  def row(index: Int): Option[Map[(Int, Int), Int]] =
+    val result = underlying.filterKeys(_._2 == index)
+    if (result.isEmpty)
+      None
+    else
+      Some(result.toMap)
+
+  def column(index: Int): Option[Map[(Int, Int), Int]] =
+    val result = underlying.filterKeys(_._1 == index)
+    if (result.isEmpty)
+      None
+    else
+      Some(result.toMap)
+
+  def translate(x: Int, y: Int): Grid =
+    Grid(underlying.map((k, v) => (k._1 + x, k._2 + y) -> v))
+
   def transposeY(yValue: Int): Grid =
     Grid(
       underlying.foldLeft(underlying) { (currentState, nextPointAndValue) =>
