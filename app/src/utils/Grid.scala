@@ -8,13 +8,15 @@ case class Grid(underlying: Map[(Int, Int), Int]):
   final val columns = underlying.maxBy(_._1._1)._1._1 + 1
   final val rows = underlying.maxBy(_._1._2)._1._2 + 1
 
+  final val size = underlying.size
+
   def get(point: (Int, Int)): Option[Int] =
     underlying.get(point)
 
   def map(f: ((Int, Int), Option[Int]) => ((Int, Int), Option[Int])): Grid =
     Grid(
       List
-        .tabulate(columns, rows) { case point =>
+        .tabulate(columns + 1, rows + 1) { case point =>
           f(point, underlying.get(point))
         }
         .flatten
@@ -118,12 +120,21 @@ object Grid:
           s.tail,
           x + 1,
           y,
-          result + ((x -> y) -> c.getNumericValue)
+          result + ((x -> y) -> toNumericValue(c))
         )
 
+  // stopgap
+  // todo allow generic value type
+  // todo allow this kind of mapping to be passed by the caller
+  private def toNumericValue(c: Char) =
+    c match
+      case '#' => 1
+      case '.' => 0
+      case c   => c.getNumericValue
+
   implicit val showGrid: Show[Grid] = Show.show(map =>
-    val maxX = map.underlying.maxBy(_._1._1)._1._1
-    val maxY = map.underlying.maxBy(_._1._2)._1._2
+    val maxX = map.columns
+    val maxY = map.rows
     val grid =
       List.tabulate(maxY + 1, maxX + 1)((y, x) =>
         map.underlying.get((x, y)).getOrElse(".")
