@@ -13,12 +13,27 @@ object DiracDice:
     rolls = 0
   )
 
+  // play one universe of games up to a winner
   @scala.annotation.tailrec
   final def playUntilWinner(state: GameState): GameState =
     if (state.winner.nonEmpty)
       state
     else
       playUntilWinner(state.playTurn)
+
+  // find all possible outcomes
+  // just keeps the winning player counts to avoid it going too mad
+  final def playAllGames(state: GameState): (Int, Int) =
+    if (state.player1.isWinner)
+      1 -> 0
+    else if (state.player2.isWinner)
+      0 -> 1
+    else
+      state.universeOfNextSteps
+        .map(playAllGames)
+        .fold(0 -> 0) { (l, r) =>
+          (l._1 + r._1) -> (l._2 + r._2)
+        }
 
   case class Player(
       playerNumber: Int,
@@ -52,10 +67,9 @@ object DiracDice:
     final lazy val answer = loser.map(_.score * rolls)
 
     final lazy val playTurn: GameState =
-      val possibleNextSteps = universeOfNextSteps(die)
-      possibleNextSteps.apply((Math.random * possibleNextSteps.size).toInt)
+      universeOfNextSteps.apply((Math.random * universeOfNextSteps.size).toInt)
 
-    final def universeOfNextSteps(die: Dice): List[GameState] =
+    final lazy val universeOfNextSteps: List[GameState] =
       val possibleRolls = die.roll(1)._1.possibleValues.flatMap { roll1 =>
         die.roll(2)._1.possibleValues.flatMap { roll2 =>
           die.roll(3)._1.possibleValues.map { roll3 =>

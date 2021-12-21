@@ -79,4 +79,17 @@ object DiracDiceTests extends TestSuite:
 
       assert(result.answer == Some(742257))
     }
+
+    test("all games example") - {
+      val gameStartState = DiracDice.newGame(
+        p1Start = 4,
+        p2Start = 8,
+        die = Dice.D3,
+        targetScore = 5
+      )
+
+      val universes = DiracDice.playAllGames(gameStartState)
+
+      println(universes)
+    }
   }
