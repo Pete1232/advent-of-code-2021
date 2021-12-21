@@ -16,7 +16,7 @@ case class Grid(underlying: Map[(Int, Int), Int]):
   def map(f: ((Int, Int), Option[Int]) => ((Int, Int), Option[Int])): Grid =
     Grid(
       List
-        .tabulate(columns + 1, rows + 1) { case point =>
+        .tabulate(columns, rows) { case point =>
           f(point, underlying.get(point))
         }
         .flatten
