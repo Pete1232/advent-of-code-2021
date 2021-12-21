@@ -1,10 +1,11 @@
 import utest._
+import Dice.DeterministicD100
 
 object DiracDiceTests extends TestSuite:
 
   val tests = Tests {
     test("the deterministic die should work") - {
-      val die = Dice.DeterministicD100(currentValue = 1)
+      val die: DeterministicD100 = Dice.DeterministicD100(currentValue = 1)
       assert(die.roll(1)._1.currentValue == 2)
       assert(die.roll(9)._1.currentValue == 10)
       assert(die.roll(5)._1.roll(9)._1.currentValue == 15)

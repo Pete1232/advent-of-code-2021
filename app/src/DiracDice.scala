@@ -52,33 +52,62 @@ object DiracDice:
     final lazy val answer = loser.map(_.score * rolls)
 
     final lazy val playTurn: GameState =
-      val (rolledDie, total) = die.roll(times = 3)
-      if (isPlayer1Turn)
-        this.copy(
-          player1 = player1.move(total),
-          die = rolledDie,
-          isPlayer1Turn = false,
-          rolls = rolls + 3
-        )
-      else
-        this.copy(
-          player2 = player2.move(total),
-          die = rolledDie,
-          isPlayer1Turn = true,
-          rolls = rolls + 3
-        )
+      val possibleNextSteps = universeOfNextSteps(die)
+      possibleNextSteps.apply((Math.random * possibleNextSteps.size).toInt)
+
+    final def universeOfNextSteps(die: Dice): List[GameState] =
+      val possibleRolls = die.roll(1)._1.possibleValues.flatMap { roll1 =>
+        die.roll(2)._1.possibleValues.flatMap { roll2 =>
+          die.roll(3)._1.possibleValues.map { roll3 =>
+            (roll1, roll2, roll3)
+          }
+        }
+      }
+      val rolledDie = die.roll(3)._1
+
+      possibleRolls.map { case (r1, r2, r3) =>
+        val total = r1 + r2 + r3
+        if (isPlayer1Turn)
+          this.copy(
+            player1 = player1.move(total),
+            die = rolledDie,
+            isPlayer1Turn = false,
+            rolls = rolls + 3
+          )
+        else
+          this.copy(
+            player2 = player2.move(total),
+            die = rolledDie,
+            isPlayer1Turn = true,
+            rolls = rolls + 3
+          )
+      }
 
 sealed trait Dice:
-  def currentValue: Int
+  def possibleValues: List[Int]
   def roll(times: Int): (Dice, Int)
 
 object Dice:
+
+  object D3 extends Dice:
+    def roll(times: Int): (D3.type, Int) =
+      (D3 -> (Math.random * 3).toInt)
+
+    lazy val possibleValues: List[Int] = List(1, 2, 3)
+
   case class DeterministicD100(currentValue: Int) extends Dice:
 
-    def roll(times: Int): (Dice, Int) = roll(times, currentValue, 0)
+    def roll(times: Int): (DeterministicD100, Int) =
+      roll(times, currentValue, 0)
+
+    lazy val possibleValues: List[Int] = List(currentValue)
 
     @scala.annotation.tailrec
-    private def roll(times: Int, value: Int, total: Int): (Dice, Int) =
+    private def roll(
+        times: Int,
+        value: Int,
+        total: Int
+    ): (DeterministicD100, Int) =
       val newValue =
         val v = ((value + 1) % 101)
         if (v == 0) 1 else v
