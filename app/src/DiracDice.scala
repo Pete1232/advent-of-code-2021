@@ -1,8 +1,13 @@
 object DiracDice:
 
-  def newGame(p1Start: Int, p2Start: Int, die: Dice): GameState = GameState(
-    Player(playerNumber = 1, score = 0, currentSpace = p1Start),
-    Player(playerNumber = 2, score = 0, currentSpace = p2Start),
+  def newGame(
+      p1Start: Int,
+      p2Start: Int,
+      die: Dice,
+      targetScore: Int
+  ): GameState = GameState(
+    Player(playerNumber = 1, score = 0, currentSpace = p1Start, targetScore),
+    Player(playerNumber = 2, score = 0, currentSpace = p2Start, targetScore),
     die = die,
     isPlayer1Turn = true,
     rolls = 0
@@ -15,8 +20,13 @@ object DiracDice:
     else
       playUntilWinner(state.playTurn)
 
-  case class Player(playerNumber: Int, score: Int, currentSpace: Int):
-    final val isWinner = score >= 1000
+  case class Player(
+      playerNumber: Int,
+      score: Int,
+      currentSpace: Int,
+      targetScore: Int
+  ):
+    final val isWinner = score >= targetScore
 
     def move(spaces: Int): Player =
       // slightly complicated formula to offset by 1 (for 1-based counting)

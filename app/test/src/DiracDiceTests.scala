@@ -32,7 +32,8 @@ object DiracDiceTests extends TestSuite:
       val gameStartState = DiracDice.newGame(
         p1Start = 4,
         p2Start = 8,
-        die = Dice.DeterministicD100(currentValue = 0)
+        die = Dice.DeterministicD100(currentValue = 0),
+        targetScore = 1000
       )
 
       val oneTurnEach = gameStartState.playTurn.playTurn
@@ -55,7 +56,8 @@ object DiracDiceTests extends TestSuite:
       val gameStartState = DiracDice.newGame(
         p1Start = 4,
         p2Start = 8,
-        die = Dice.DeterministicD100(currentValue = 0)
+        die = Dice.DeterministicD100(currentValue = 0),
+        targetScore = 1000
       )
 
       val result = DiracDice.playUntilWinner(gameStartState)
@@ -68,7 +70,8 @@ object DiracDiceTests extends TestSuite:
       val gameStartState = DiracDice.newGame(
         p1Start = 10,
         p2Start = 3,
-        die = Dice.DeterministicD100(currentValue = 0)
+        die = Dice.DeterministicD100(currentValue = 0),
+        targetScore = 1000
       )
 
       val result = DiracDice.playUntilWinner(gameStartState)
