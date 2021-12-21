@@ -19,6 +19,17 @@ object ImageEnhancement:
       )
     }
 
+  def enhanceRepeated(
+      grid: Grid,
+      algorithm: String,
+      default: Int,
+      times: Int
+  ): Grid =
+    if (times == 0) grid
+    else
+      val enhanced = enhance(grid, algorithm, default)
+      enhanceRepeated(enhanced, algorithm, (default + 1) % 2, times - 1)
+
   def pointValue(grid: Grid, point: (Int, Int), default: Int): BinaryNumber =
     val upL = (point._1 - 1, point._2 - 1)
     val up = (point._1, point._2 - 1)

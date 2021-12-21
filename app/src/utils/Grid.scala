@@ -141,10 +141,10 @@ object Grid:
           .get((x, y))
           .map {
             _ match
-              case 0 => "*"
+              case 0 => "."
               case n => n
           }
-          .getOrElse(".")
+          .getOrElse("*")
       )
     grid.map(_.mkString(" ")).mkString("\n")
   )

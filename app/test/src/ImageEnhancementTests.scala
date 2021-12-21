@@ -173,5 +173,16 @@ object ImageEnhancementTests extends TestSuite:
         )
 
       assert(answerEnhanced2.size == 5339)
+
+      val enhancedTwice =
+        ImageEnhancement.enhanceRepeated(answerGrid, answerAlgorithm, 0, 2)
+
+      assert(enhancedTwice.size == 5339)
+
+      // << takes about 20s to run >>
+      // val enhanced50 =
+      //   ImageEnhancement.enhanceRepeated(answerGrid, answerAlgorithm, 0, 50)
+
+      // println(enhanced50.size)
     }
   }
