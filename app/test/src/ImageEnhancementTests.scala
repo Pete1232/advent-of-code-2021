@@ -24,35 +24,37 @@ object ImageEnhancementTests extends TestSuite:
     test("points value") - {
       println(extendedGrid.show + "\n")
 
-      val result1 = ImageEnhancement.pointValue(extendedGrid, 0 -> 0)
+      val result1 = ImageEnhancement.pointValue(extendedGrid, 0 -> 0, 0)
       assert(result1 == BinaryNumber("000000001"))
 
-      val result2 = ImageEnhancement.pointValue(extendedGrid, 3 -> 3)
+      val result2 = ImageEnhancement.pointValue(extendedGrid, 3 -> 3, 0)
       assert(result2 == BinaryNumber("000100010"))
 
-      val result3 = ImageEnhancement.pointValue(extendedGrid, 5 -> 5)
+      val result3 = ImageEnhancement.pointValue(extendedGrid, 5 -> 5, 0)
       assert(result3 == BinaryNumber("000110000"))
 
-      val result4 = ImageEnhancement.pointValue(extendedGrid, 1 -> 3)
+      val result4 = ImageEnhancement.pointValue(extendedGrid, 1 -> 3, 0)
       assert(result4 == BinaryNumber("010011000"))
 
-      val result5 = ImageEnhancement.pointValue(extendedGrid, 4 -> 2)
+      val result5 = ImageEnhancement.pointValue(extendedGrid, 4 -> 2, 0)
       assert(result5 == BinaryNumber("010000001"))
     }
 
     test("enhance an image once") - {
       val enhancedGrid1 =
-        ImageEnhancement.enhance(testGrid, enhancementAlgorithm)
+        ImageEnhancement.enhance(testGrid, enhancementAlgorithm, 0)
       println(enhancedGrid1.show + "\n")
 
       val enhancedGrid2 =
-        ImageEnhancement.enhance(enhancedGrid1, enhancementAlgorithm)
+        ImageEnhancement.enhance(enhancedGrid1, enhancementAlgorithm, 0)
       println(enhancedGrid2.show)
 
       assert(enhancedGrid2.size == 35)
     }
 
     test("answer") - {
+      // 0s will flip to 1
+      // 511s will flop back to 0, so only need to worry about the boundary
       val answerAlgorithm =
         "##.......#.####..#..#...##.##...#.####.#.##.######...###...#..#####...###...##.###..#...#....#.#....###.#....##..####...##....###....##.#.###..###.#...####.#....#.#.#.####...#...#.#..#....#######......#..#.###.....#.#...#.....##.##.##..#....##.##.####.#..#..#.#...#..########.##.########....##.#...#...#..#..#.#..#..###..#..##.##.#.#.#.##.##..##....#.##.#.#.##.#..#..####..#...####.##..#.....###...##..##..####..#..#...####.##.##.#.##.#....####..####...#.#.#..#.#.##.##.##.###.#......##.#...#.#.##..##.##..###..."
       val answerGrid = Grid.buildGrid(
@@ -161,14 +163,15 @@ object ImageEnhancementTests extends TestSuite:
       )
 
       val answerEnhanced1 =
-        ImageEnhancement.enhance(answerGrid, answerAlgorithm)
+        ImageEnhancement.enhance(answerGrid, answerAlgorithm, 0)
 
       val answerEnhanced2 =
         ImageEnhancement.enhance(
           answerEnhanced1,
-          answerAlgorithm
+          answerAlgorithm,
+          1
         )
 
-      println(answerEnhanced2.size)
+      assert(answerEnhanced2.size == 5339)
     }
   }

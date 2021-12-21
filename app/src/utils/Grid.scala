@@ -8,7 +8,7 @@ case class Grid(underlying: Map[(Int, Int), Int]):
   final val columns = underlying.maxBy(_._1._1)._1._1 + 1
   final val rows = underlying.maxBy(_._1._2)._1._2 + 1
 
-  final val size = underlying.size
+  final val size = underlying.filterNot(_._2 == 0).size
 
   def get(point: (Int, Int)): Option[Int] =
     underlying.get(point)
@@ -137,7 +137,14 @@ object Grid:
     val maxY = map.rows
     val grid =
       List.tabulate(maxY + 1, maxX + 1)((y, x) =>
-        map.underlying.get((x, y)).getOrElse(".")
+        map.underlying
+          .get((x, y))
+          .map {
+            _ match
+              case 0 => "*"
+              case n => n
+          }
+          .getOrElse(".")
       )
     grid.map(_.mkString(" ")).mkString("\n")
   )
