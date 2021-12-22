@@ -86,15 +86,16 @@ object DiracDiceTests extends TestSuite:
       val player1Distribution = game.distribution(startValue = 4)
       assert(player1Distribution.get(1) == Some(17))
       assert(player1Distribution.get(2) == Some(27 * 6 + 26 * 3 + 24 * 1))
+      assert(player1Distribution.get(3) == Some(162))
     }
 
-    // test("all games example") - {
-    //   val game = DiracDice(targetValue = 21)
-    //   val player1Distribution = game.distribution(startValue = 4)
-    //   val player2Distribution = game.distribution(startValue = 8)
-    //   val result =
-    //     game.determineWinners(player1Distribution, player2Distribution)
+    test("all games example") - {
+      val game = DiracDice(targetValue = 21)
+      val player1Distribution = game.distribution(startValue = 4)
+      val player2Distribution = game.distribution(startValue = 8)
+      val result =
+        game.determineWinners(player1Distribution, player2Distribution)
 
-    //   println(result)
-    // }
+      println(result)
+    }
   }

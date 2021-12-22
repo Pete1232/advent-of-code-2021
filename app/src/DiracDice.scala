@@ -159,16 +159,11 @@ final case class DiracDice(targetValue: Int):
           score = 0,
           currentSpace = startValue,
           targetScore = targetValue
-        )
+        ) -> 1
       ),
       currentDepth = 0,
       result = Map.empty
     )
-
-  // TODO this needs to account for the actual game part of the puzzle
-  // i.e. this currently assumes the new score each step is 1-3
-  // it should actually be a function of 1-3
-  // at each node will need to track the total score (as it does now), plus the current space on the board
 
   val possibleDiceRolls: List[Int] = List(1, 2, 3).flatMap { r1 =>
     List(1, 2, 3).flatMap { r2 =>
@@ -180,17 +175,18 @@ final case class DiracDice(targetValue: Int):
 
   @scala.annotation.tailrec
   private def distribution(
-      nodes: List[DiracDice.Player],
+      nodes: List[(DiracDice.Player, Int)],
       currentDepth: Int,
       result: StepDistribution
   ): StepDistribution =
+    // println(currentDepth.toString + " " + nodes.map(p => p._1.currentSpace -> p._1.score -> p._2))
 
     val (remainingNodes, nodesThatReachedTarget) =
-      nodes.foldLeft[(List[DiracDice.Player], Long)](Nil -> 0) {
+      nodes.foldLeft[(List[(DiracDice.Player, Int)], Long)](Nil -> 0) {
         case (searchResult, nextNode) =>
           val (stillToSearch, completedThisStep) = searchResult
-          if (nextNode.score >= targetValue)
-            stillToSearch -> (completedThisStep + 1)
+          if (nextNode._1.score >= targetValue)
+            stillToSearch -> (completedThisStep + nextNode._2)
           else
             (nextNode +: stillToSearch) -> completedThisStep
       }
@@ -203,7 +199,12 @@ final case class DiracDice(targetValue: Int):
     else
       distribution(
         remainingNodes.flatMap(nodeValue =>
-          possibleDiceRolls.map(n => nodeValue.move(spaces = n))
+          possibleDiceRolls
+            .map(n => n -> nodeValue._1.move(spaces = n))
+            .groupBy(_._1)
+            .map { case (roll, result) =>
+              result.map(_._2).head -> result.size * nodeValue._2
+            }
         ),
         currentDepth + 1,
         newResult
