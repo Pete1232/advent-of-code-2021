@@ -80,12 +80,21 @@ object DiracDiceTests extends TestSuite:
       assert(result.answer == Some(742257))
     }
 
+    test("find the distribution") - {
+      val result = DiracDice(targetValue = 4).distribution(startValue = 0)
+      assert(result == Map(0 -> 0, 1 -> 0, 2 -> 6, 3 -> 8, 4 -> 3))
+
+      val result2 = DiracDice(targetValue = 21).distribution(startValue = 0)
+      assert(result2.size == 22)
+      assert(result2.maxBy(_._1) == 21 -> 3)
+    }
+
     test("all games example") - {
       val gameStartState = DiracDice.newGame(
         p1Start = 4,
         p2Start = 8,
         die = Dice.D3,
-        targetScore = 10
+        targetScore = 5
       )
 
       val universes = DiracDice.playAllGames(gameStartState)

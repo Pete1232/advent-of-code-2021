@@ -1,5 +1,8 @@
 object DiracDice:
 
+  def addTuple(l: (Long, Long), r: (Long, Long)): (Long, Long) =
+    (l._1 + r._1) -> (l._2 + r._2)
+
   def newGame(
       p1Start: Int,
       p2Start: Int,
@@ -142,3 +145,62 @@ object Dice:
         DeterministicD100(newValue) -> (total + newValue)
       else
         roll(times - 1, newValue, total + newValue)
+
+// approach the problem looking at the distribution rather than modelling each full game
+final case class DiracDice(targetValue: Int):
+
+  type StepDistribution = Map[Int, Long]
+
+  def distribution(startValue: Int): StepDistribution =
+    distribution(List(startValue), currentDepth = 0, result = Map.empty)
+
+  // TODO this needs to account for the actual game part of the puzzle
+  // i.e. this currently assumes the new score each step is 1-3
+  // it should actually be a function of 1-3
+  // at each node will need to track the total score (as it does now), plus the current space on the board
+  @scala.annotation.tailrec
+  private def distribution(
+      nodes: List[Int],
+      currentDepth: Int,
+      result: StepDistribution
+  ): StepDistribution =
+    val (remainingNodes, nodesThatReachedTarget) =
+      nodes.foldLeft[(List[Int], Long)](Nil -> 0) {
+        case (searchResult, nextNode) =>
+          val (stillToSearch, completedThisStep) = searchResult
+          if (nextNode >= targetValue)
+            stillToSearch -> (completedThisStep + 1)
+          else
+            (nextNode +: stillToSearch) -> completedThisStep
+      }
+
+    val newResult: StepDistribution =
+      result + (currentDepth -> nodesThatReachedTarget)
+
+    if (remainingNodes.isEmpty)
+      newResult
+    else
+      distribution(
+        remainingNodes.flatMap(nodeValue => Seq(1, 2, 3).map(_ + nodeValue)),
+        currentDepth + 1,
+        newResult
+      )
+
+  def determineWinners(distribution: StepDistribution): (Long, Long) =
+    // if player 1 finishes in n steps
+    //  then player 1 wins whenever player 2 finishes in >= n steps, and loses otherwise
+
+    // do this from p1 perspective, first get all step counts where its possible to finish
+    val player1Steps = distribution.filterNot(_._2 == 0).keySet
+
+    val allResults = player1Steps.flatMap { player1StepCount =>
+      distribution.toList.map { case (player2StepCount, totalCount) =>
+        if (player2StepCount >= player1StepCount)
+          //player1 wins
+          totalCount -> 0L
+        else
+          // player 2 wins
+          0L -> totalCount
+      }
+    }
+    allResults.toList.fold(0L -> 0L)(DiracDice.addTuple)
