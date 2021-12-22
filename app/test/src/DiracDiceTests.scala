@@ -85,7 +85,7 @@ object DiracDiceTests extends TestSuite:
         p1Start = 4,
         p2Start = 8,
         die = Dice.D3,
-        targetScore = 5
+        targetScore = 10
       )
 
       val universes = DiracDice.playAllGames(gameStartState)

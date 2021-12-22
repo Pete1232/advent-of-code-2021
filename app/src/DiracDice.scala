@@ -24,16 +24,29 @@ object DiracDice:
   // find all possible outcomes
   // just keeps the winning player counts to avoid it going too mad
   final def playAllGames(state: GameState): (Int, Int) =
-    if (state.player1.isWinner)
-      1 -> 0
-    else if (state.player2.isWinner)
-      0 -> 1
-    else
-      state.universeOfNextSteps
-        .map(playAllGames)
-        .fold(0 -> 0) { (l, r) =>
-          (l._1 + r._1) -> (l._2 + r._2)
-        }
+    playAllGames(List(state), (0 -> 0))
+
+  @scala.annotation.tailrec
+  private def playAllGames(
+      ongoingGames: List[GameState],
+      currentScore: (Int, Int)
+  ): (Int, Int) =
+    def add(l: (Int, Int), r: (Int, Int)): (Int, Int) =
+      (l._1 + r._1) -> (l._2 + r._2)
+
+    ongoingGames.headOption match
+      case Some(game) =>
+        if (game.player1.isWinner)
+          playAllGames(ongoingGames.tail, add(currentScore, (1 -> 0)))
+        else if (game.player2.isWinner)
+          playAllGames(ongoingGames.tail, add(currentScore, (0 -> 1)))
+        else
+          playAllGames(
+            game.universeOfNextSteps ++ ongoingGames.tail,
+            currentScore
+          )
+      case None =>
+        currentScore
 
   case class Player(
       playerNumber: Int,
