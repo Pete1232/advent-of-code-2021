@@ -152,23 +152,44 @@ final case class DiracDice(targetValue: Int):
   type StepDistribution = Map[Int, Long]
 
   def distribution(startValue: Int): StepDistribution =
-    distribution(List(startValue), currentDepth = 0, result = Map.empty)
+    distribution(
+      List(
+        DiracDice.Player(
+          playerNumber = 1,
+          score = 0,
+          currentSpace = startValue,
+          targetScore = targetValue
+        )
+      ),
+      currentDepth = 0,
+      result = Map.empty
+    )
 
   // TODO this needs to account for the actual game part of the puzzle
   // i.e. this currently assumes the new score each step is 1-3
   // it should actually be a function of 1-3
   // at each node will need to track the total score (as it does now), plus the current space on the board
+
+  val possibleDiceRolls: List[Int] = List(1, 2, 3).flatMap { r1 =>
+    List(1, 2, 3).flatMap { r2 =>
+      List(1, 2, 3).map { r3 =>
+        r1 + r2 + r3
+      }
+    }
+  }
+
   @scala.annotation.tailrec
   private def distribution(
-      nodes: List[Int],
+      nodes: List[DiracDice.Player],
       currentDepth: Int,
       result: StepDistribution
   ): StepDistribution =
+
     val (remainingNodes, nodesThatReachedTarget) =
-      nodes.foldLeft[(List[Int], Long)](Nil -> 0) {
+      nodes.foldLeft[(List[DiracDice.Player], Long)](Nil -> 0) {
         case (searchResult, nextNode) =>
           val (stillToSearch, completedThisStep) = searchResult
-          if (nextNode >= targetValue)
+          if (nextNode.score >= targetValue)
             stillToSearch -> (completedThisStep + 1)
           else
             (nextNode +: stillToSearch) -> completedThisStep
@@ -181,26 +202,34 @@ final case class DiracDice(targetValue: Int):
       newResult
     else
       distribution(
-        remainingNodes.flatMap(nodeValue => Seq(1, 2, 3).map(_ + nodeValue)),
+        remainingNodes.flatMap(nodeValue =>
+          possibleDiceRolls.map(n => nodeValue.move(spaces = n))
+        ),
         currentDepth + 1,
         newResult
       )
 
-  def determineWinners(distribution: StepDistribution): (Long, Long) =
+  def determineWinners(
+      player1Distribution: StepDistribution,
+      player2Distribution: StepDistribution
+  ): (Long, Long) =
+    // player 1 always goes first
     // if player 1 finishes in n steps
     //  then player 1 wins whenever player 2 finishes in >= n steps, and loses otherwise
 
-    // do this from p1 perspective, first get all step counts where its possible to finish
-    val player1Steps = distribution.filterNot(_._2 == 0).keySet
-
-    val allResults = player1Steps.flatMap { player1StepCount =>
-      distribution.toList.map { case (player2StepCount, totalCount) =>
-        if (player2StepCount >= player1StepCount)
-          //player1 wins
-          totalCount -> 0L
-        else
-          // player 2 wins
-          0L -> totalCount
-      }
+    val allResults = player1Distribution.toList.flatMap {
+      case (player1StepCount, player1TotalCount) =>
+        player2Distribution.toList.map {
+          case (player2StepCount, player2TotalCount) =>
+            // what's the probability of being here?
+            // the total number of times player 1 finishes in this many steps * the number of times player 2 does
+            val probability = player2TotalCount * player1TotalCount
+            if (player2StepCount >= player1StepCount)
+              // player 1 wins
+              probability -> 0L
+            else
+              // player 2 wins
+              0L -> probability
+        }
     }
     allResults.toList.fold(0L -> 0L)(DiracDice.addTuple)
