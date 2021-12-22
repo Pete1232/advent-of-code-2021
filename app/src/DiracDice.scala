@@ -1,3 +1,4 @@
+import cats.conversions.all
 object DiracDice:
 
   def addTuple(l: (Long, Long), r: (Long, Long)): (Long, Long) =
@@ -200,10 +201,10 @@ final case class DiracDice(targetValue: Int):
       distribution(
         remainingNodes.flatMap(nodeValue =>
           possibleDiceRolls
-            .map(n => n -> nodeValue._1.move(spaces = n))
+            .map(roll => roll -> nodeValue._1.move(spaces = roll))
             .groupBy(_._1)
-            .map { case (roll, result) =>
-              result.map(_._2).head -> result.size * nodeValue._2
+            .map { case (roll, results) =>
+              results.map(_._2).head -> results.size * nodeValue._2
             }
         ),
         currentDepth + 1,
@@ -218,19 +219,15 @@ final case class DiracDice(targetValue: Int):
     // if player 1 finishes in n steps
     //  then player 1 wins whenever player 2 finishes in >= n steps, and loses otherwise
 
-    val allResults = player1Distribution.toList.flatMap {
-      case (player1StepCount, player1TotalCount) =>
-        player2Distribution.toList.map {
-          case (player2StepCount, player2TotalCount) =>
-            // what's the probability of being here?
-            // the total number of times player 1 finishes in this many steps * the number of times player 2 does
-            val probability = player2TotalCount * player1TotalCount
-            if (player2StepCount >= player1StepCount)
-              // player 1 wins
-              probability -> 0L
-            else
-              // player 2 wins
-              0L -> probability
-        }
+    // say player 1 finishes in n steps t_1(n) times
+    // player 1 loses if player 2 finishes in at most n - 1 steps, which happens t_2(n -1) + t_2(n - 2) + ... t_2(1) + t_2(0) times
+
+    val allResults = player1Distribution.toList.map {
+      case (player1StepCount, player1Frequency) =>
+        val (p1Wins, p1Losses) =
+          player2Distribution.partition(_._1 >= player1StepCount)
+        val result =
+          ((player1Frequency * p1Wins.values.sum) -> (player1Frequency * p1Losses.values.sum))
+        result
     }
     allResults.toList.fold(0L -> 0L)(DiracDice.addTuple)
