@@ -89,6 +89,39 @@ object DiracDiceTests extends TestSuite:
       assert(player1Distribution.get(3) == Some(162))
     }
 
+    test("distribution test with a different movement rule") - {
+      // this game just roll and add to the score each time
+      val game1 = DiracDice(
+        targetValue = 7,
+        movementRule = (player, roll) =>
+          player.copy(
+            currentSpace = player.currentSpace + roll,
+            score = player.score + roll
+          )
+      )
+      val player1Distribution = game1.distribution(
+        startValue = 0,
+        possibleDiceRolls = List(3, 4, 4, 4, 5, 5, 5, 6)
+      )
+      assert(player1Distribution == Map(0 -> 0, 1 -> 0, 2 -> 63, 3 -> 8))
+
+      val game2 = DiracDice(
+        targetValue = 7,
+        movementRule = (player, roll) =>
+          player.copy(
+            currentSpace = player.currentSpace + roll,
+            score =
+              player.score + roll + 1 // +1 to account for the start position with this rule
+          )
+      )
+
+      val player2Distribution = game2.distribution(
+        startValue = 1,
+        possibleDiceRolls = List(3, 4, 4, 4, 5, 5, 5, 6)
+      )
+      assert(player2Distribution == Map(0 -> 0, 1 -> 1, 2 -> 56))
+    }
+
     test("all games example") - {
       val game = DiracDice(targetValue = 21)
       val player1Distribution = game.distribution(startValue = 4)

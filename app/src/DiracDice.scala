@@ -148,7 +148,12 @@ object Dice:
         roll(times - 1, newValue, total + newValue)
 
 // approach the problem looking at the distribution rather than modelling each full game
-final case class DiracDice(targetValue: Int):
+final case class DiracDice(
+    targetValue: Int,
+    movementRule: (DiracDice.Player, Int) => DiracDice.Player = {
+      (player, roll) => player.move(spaces = roll)
+    }
+):
 
   type StepDistribution = Map[Int, Long]
 
@@ -163,10 +168,29 @@ final case class DiracDice(targetValue: Int):
         ) -> 1
       ),
       currentDepth = 0,
-      result = Map.empty
+      result = Map.empty,
+      possibleDiceRollsWith3
     )
 
-  val possibleDiceRolls: List[Int] = List(1, 2, 3).flatMap { r1 =>
+  def distribution(
+      startValue: Int,
+      possibleDiceRolls: List[Int]
+  ): StepDistribution =
+    distribution(
+      List(
+        DiracDice.Player(
+          playerNumber = 1,
+          score = 0,
+          currentSpace = startValue,
+          targetScore = targetValue
+        ) -> 1
+      ),
+      currentDepth = 0,
+      result = Map.empty,
+      possibleDiceRolls
+    )
+
+  val possibleDiceRollsWith3: List[Int] = List(1, 2, 3).flatMap { r1 =>
     List(1, 2, 3).flatMap { r2 =>
       List(1, 2, 3).map { r3 =>
         r1 + r2 + r3
@@ -178,7 +202,8 @@ final case class DiracDice(targetValue: Int):
   private def distribution(
       nodes: List[(DiracDice.Player, Int)],
       currentDepth: Int,
-      result: StepDistribution
+      result: StepDistribution,
+      possibleDiceRolls: List[Int]
   ): StepDistribution =
     // println(currentDepth.toString + " " + nodes.map(p => p._1.currentSpace -> p._1.score -> p._2))
 
@@ -201,14 +226,15 @@ final case class DiracDice(targetValue: Int):
       distribution(
         remainingNodes.flatMap(nodeValue =>
           possibleDiceRolls
-            .map(roll => roll -> nodeValue._1.move(spaces = roll))
+            .map(roll => roll -> movementRule(nodeValue._1, roll))
             .groupBy(_._1)
             .map { case (roll, results) =>
               results.map(_._2).head -> results.size * nodeValue._2
             }
         ),
         currentDepth + 1,
-        newResult
+        newResult,
+        possibleDiceRolls
       )
 
   def determineWinners(
